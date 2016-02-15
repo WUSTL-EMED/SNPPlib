@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SNPPlib", "SNPPlib\SNPPlib.csproj", "{16EF0A23-9A90-4E06-B9AE-3AA8A5E862C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SNPPlib.Tests", "SNPPlib.Tests\SNPPlib.Tests.csproj", "{0554F45B-199C-4A01-86C6-AC860A9C90B4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SNPPHost", "SNPPHost\SNPPHost.csproj", "{4452CE47-41B5-4655-AB7B-9ABFA6BD9701}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{16EF0A23-9A90-4E06-B9AE-3AA8A5E862C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16EF0A23-9A90-4E06-B9AE-3AA8A5E862C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16EF0A23-9A90-4E06-B9AE-3AA8A5E862C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16EF0A23-9A90-4E06-B9AE-3AA8A5E862C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0554F45B-199C-4A01-86C6-AC860A9C90B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0554F45B-199C-4A01-86C6-AC860A9C90B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0554F45B-199C-4A01-86C6-AC860A9C90B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0554F45B-199C-4A01-86C6-AC860A9C90B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4452CE47-41B5-4655-AB7B-9ABFA6BD9701}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4452CE47-41B5-4655-AB7B-9ABFA6BD9701}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4452CE47-41B5-4655-AB7B-9ABFA6BD9701}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4452CE47-41B5-4655-AB7B-9ABFA6BD9701}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
