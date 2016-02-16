@@ -19,17 +19,17 @@ namespace SNPPlib
 
         public static Task<int> SendTaskAsync(this Socket socket, byte[] buffer, int offset, int size, SocketFlags flags = SocketFlags.None)
         {
-            return Task.Factory.FromAsync(socket.BeginSend(buffer, offset, size, flags, (i) => { }, socket), socket.EndSend);
+            return Task.Factory.FromAsync<int>(socket.BeginSend(buffer, offset, size, flags, (i) => { }, socket), socket.EndSend);
         }
 
         public static Task<int> ReceiveTaskAsync(this Socket socket, byte[] buffer, int offset, int size, SocketFlags flags = SocketFlags.None)
         {
-            return Task.Factory.FromAsync(socket.BeginReceive(buffer, offset, size, flags, null, socket), socket.EndReceive);
+            return Task.Factory.FromAsync<int>(socket.BeginReceive(buffer, offset, size, flags, null, socket), socket.EndReceive);
         }
 
         public static Task<Socket> AcceptTaskAsync(this Socket socket)
         {
-            return Task.Factory.FromAsync(socket.BeginAccept, socket.EndAccept, socket);
+            return Task.Factory.FromAsync<Socket>(socket.BeginAccept, socket.EndAccept, socket);
         }
     }
 }
