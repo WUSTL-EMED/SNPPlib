@@ -74,7 +74,7 @@ namespace SNPPlib
                                     {
                                         tokenSource.Token.ThrowIfCancellationRequested();
 
-                                        var request = (await remote.ReceiveTaskAsync(1024)).Split(new string[] { " ", "\r", "\n" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                                        var request = (await remote.ReceiveTaskAsync(1024)).Split(new char[] { ' ', '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries);
                                         var command = request.Length > 0 ? request[0] : default(string);
                                         var argument = request.Length > 1 ? request[1] : default(string);
 

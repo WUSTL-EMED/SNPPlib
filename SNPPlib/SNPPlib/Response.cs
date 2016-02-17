@@ -36,7 +36,7 @@ namespace SNPPlib
                 code = ResponseCode.Malformed;
             Code = code;
 
-            var responseLines = response.TrimEnd('\0').Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var responseLines = response.TrimEnd('\0').Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             for (var i = responseLines.Count - 1; 0 <= i; i--)
             {
                 var responseLine = responseLines[i];
