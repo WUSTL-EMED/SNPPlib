@@ -23,8 +23,11 @@ namespace SNPPlib
         }
 
         private IPAddress Address { get; set; }
+
         private Dictionary<string, Func<Guid, string, Task<string>>> Commands { get; set; }
+
         private ushort Port { get; set; }
+
         private Socket Socket { get; set; }
 
         public void AddCommand(string command, Func<Guid, string, Task<string>> handler)
@@ -58,8 +61,7 @@ namespace SNPPlib
                             tokenSource.Token.ThrowIfCancellationRequested();
 
                             var remote = await Socket.AcceptTaskAsync();
-                            var hello = "220 SNPP (V3) Gateway Ready\r\n";
-                            await remote.SendTaskAsync(Encoding.ASCII.GetBytes(hello), 0, Encoding.ASCII.GetByteCount(hello), SocketFlags.None);
+                            await remote.SendTaskAsync("220 SNPP (V3) Gateway Ready\r\n");
 
                             //TODO: Give the remote a session token, pass the token to the command handlers
 
@@ -72,58 +74,63 @@ namespace SNPPlib
                                     {
                                         tokenSource.Token.ThrowIfCancellationRequested();
 
-                                        var buffer = new byte[1024];//TODO: Proper buffer sizes????????
-                                        await remote.ReceiveTaskAsync(buffer, 0, 1024);
-                                        var request = Encoding.ASCII.GetString(buffer).TrimEnd(new char[] { '\0' }).Split(new string[] { " ", "\r", "\n" }, 2, StringSplitOptions.RemoveEmptyEntries);
-
+                                        var request = (await remote.ReceiveTaskAsync(1024)).Split(new string[] { " ", "\r", "\n" }, 2, StringSplitOptions.RemoveEmptyEntries);
                                         var command = request.Length > 0 ? request[0] : default(string);
                                         var argument = request.Length > 1 ? request[1] : default(string);
 
                                         //Getting double requests, what is the junk?
-                                        if (String.IsNullOrEmpty(command))
+                                        if (String.IsNullOrWhiteSpace(command))
                                             continue;
 
                                         Func<Guid, string, Task<string>> func;
+                                        var funcExists = Commands.TryGetValue(command, out func) && func != null;
 
                                         if (command == "QUIT")
                                         {
                                             //Special case, we always want to quit but we may need cleanup elsewhere.
-                                            if (Commands.TryGetValue(command, out func))
-                                                await func(remoteId, argument);
+                                            if (funcExists)
+                                            {
+                                                try
+                                                {
+                                                    await func(remoteId, argument);//timeout?
+                                                }
+                                                catch (Exception) { }
+                                            }
 
-                                            var response = "221 OK, Goodbye\r\n";
-                                            await remote.SendTaskAsync(Encoding.ASCII.GetBytes(response), 0, Encoding.ASCII.GetByteCount(response), SocketFlags.None);
+                                            await remote.SendTaskAsync("221 OK, Goodbye\r\n");
                                             await remote.DisconnectTaskAsync(true);
                                             break;
                                         }
-                                        else if (Commands.TryGetValue(command, out func))
+                                        else if (funcExists)
                                         {
                                             if (command == "DATA")
                                             {
                                                 //Special case, need to keep getting input until "\r\n.\r\n".
-                                                var resp = "354 Begin Input; End with <CRLF>'.'<CRLF>\r\n";
-                                                await remote.SendTaskAsync(Encoding.ASCII.GetBytes(resp), 0, Encoding.ASCII.GetByteCount(resp), SocketFlags.None);
+                                                await remote.SendTaskAsync("354 Begin Input; End with <CRLF>'.'<CRLF>\r\n");
                                                 argument = String.Empty;
 
                                                 do
                                                 {
-                                                    var buff = new byte[1024];//TODO: Proper buffer sizes????????
-                                                    await remote.ReceiveTaskAsync(buff, 0, 1024);
-                                                    argument += Encoding.ASCII.GetString(buff).TrimEnd('\0');
+                                                    argument += await remote.ReceiveTaskAsync(1024);
                                                 }
                                                 while (!argument.EndsWith("\r\n.\r\n"));
                                                 argument = argument.Substring(0, argument.LastIndexOf("\r\n.\r\n")).TrimStart(new char[] { '\r', '\n' });
                                             }
 
-                                            var response = await func(remoteId, argument);
-                                            if (!response.EndsWith("\r\n"))
-                                                response += "\r\n";
-                                            await remote.SendTaskAsync(Encoding.ASCII.GetBytes(response), 0, Encoding.ASCII.GetByteCount(response), SocketFlags.None);
+                                            var response = "554 Error, failed (technical reason)\r\n";
+                                            try
+                                            {
+                                                response = await func(remoteId, argument);//timeout?
+                                                if (!response.EndsWith("\r\n"))
+                                                    response += "\r\n";
+                                            }
+                                            catch (Exception) { }
+
+                                            await remote.SendTaskAsync(response);
                                         }
                                         else
                                         {
-                                            var response = "500 Command Not Implemented\r\n";
-                                            await remote.SendTaskAsync(Encoding.ASCII.GetBytes(response), 0, Encoding.ASCII.GetByteCount(response), SocketFlags.None);
+                                            await remote.SendTaskAsync("500 Command Not Implemented\r\n");
                                         }
                                     }
                                 }

@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -11,7 +10,7 @@ namespace SNPPlib
     public class Client
     {
         private Regex CallerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);//is this numeric or alphanumeric?
-        private Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);//The spec says alphanumeric, what about punctuation?
         private Regex PagerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);
         private Regex LoginIdFormat = new Regex(@"^[a-z0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -50,15 +49,16 @@ namespace SNPPlib
         }
 
         private IPAddress Address { get; set; }
+
         private ushort Port { get; set; }
+
         private Socket Socket { get; set; }
 
         //option to re-try technical failures?
 
         public async Task<Response> Alert(AlertLevel level)
         {
-            var response = await Send(String.Format("ALER {0}", (byte)level));
-            return response;
+            return await Send(String.Format("ALER {0}", (byte)level));
         }
 
         public async Task<Response> CallerId(string callerId)
@@ -68,8 +68,7 @@ namespace SNPPlib
             if (!MessageFormat.IsMatch(callerId))
                 throw new ArgumentException("Caller id must be numeric.", "callerId");
 
-            var response = await Send(String.Format("CALL {0}", callerId));
-            return response;
+            return await Send(String.Format("CALL {0}", callerId));
         }
 
         public async Task<bool> Connect()
@@ -80,11 +79,8 @@ namespace SNPPlib
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             await Socket.ConnectTaskAsync(remote);
 
-            var buffer = new byte[256];//TODO: Proper buffer sizes????????
-            await Socket.ReceiveTaskAsync(buffer, 0, 256);
-            var resp = new Response(Encoding.ASCII.GetString(buffer));//TODO: Response parser
-
-            if (resp.Code == ResponseCode.GatewayReady)
+            var response = new Response(await Socket.ReceiveTaskAsync(256));//TODO: Response parser
+            if (response.Code == ResponseCode.GatewayReady)
                 return true;
             await Socket.DisconnectTaskAsync(true);
             return false;
@@ -93,8 +89,7 @@ namespace SNPPlib
         public async Task<Response> Coverage(ushort alertnateArea)
         {
             //are areas always numbers?
-            var response = await Send(String.Format("COVE {0}", alertnateArea));
-            return response;
+            return await Send(String.Format("COVE {0}", alertnateArea));
         }
 
         public async Task<Response> Data(string[] message)
@@ -126,8 +121,7 @@ namespace SNPPlib
 
         public async Task<Response> Help()
         {
-            var response = await Send("HELP");
-            return response;
+            return await Send("HELP");
         }
 
         public async Task<Response> HoldUntil(DateTime time, TimeSpan? gmtDifference = null)
@@ -137,14 +131,12 @@ namespace SNPPlib
             //Check if the date is in the past? I don't know if it matters.
 
             var gmt = gmtDifference.HasValue ? (gmtDifference < TimeSpan.Zero ? "-" : String.Empty) + gmtDifference.Value.ToString("hhmm") : String.Empty;
-            var response = await Send(String.Format("HOLD {0} {1}", time.ToString("yyMMddHHmmss"), gmt).TrimEnd());
-            return response;
+            return await Send(String.Format("HOLD {0} {1}", time.ToString("yyMMddHHmmss"), gmt).TrimEnd());
         }
 
         public async Task<Response> Level(ServiceLevel level)
         {
-            var response = await Send(String.Format("LEVE {0}", (byte)level));
-            return response;
+            return await Send(String.Format("LEVE {0}", (byte)level));
         }
 
         public async Task<Response> Login(string loginId, string password = null)
@@ -154,8 +146,7 @@ namespace SNPPlib
             if (!LoginIdFormat.IsMatch(loginId))
                 throw new ArgumentException("Login ids must be alphanumeric.", "loginId");
 
-            var response = await Send(String.Format("LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
-            return response;
+            return await Send(String.Format("LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
         }
 
         public async Task<Response> Message(string message)
@@ -168,8 +159,7 @@ namespace SNPPlib
             if (!MessageFormat.IsMatch(message))
                 throw new ArgumentException("Messages must be alphanumeric.", "message");
 
-            var response = await Send(String.Format("MESS {0}", message));
-            return response;
+            return await Send(String.Format("MESS {0}", message));
         }
 
         public async Task<Response> Pager(string pagerId, string password = null)//valid password chars?
@@ -179,30 +169,25 @@ namespace SNPPlib
             if (!PagerIdFormat.IsMatch(pagerId))
                 throw new ArgumentException("Pager ids must be numeric.", "pagerId");
 
-            var response = await Send(String.Format("PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
-            return response;
+            return await Send(String.Format("PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
         }
 
         public async Task Quit()
         {
-            var response = await Send("QUIT");
+            await Send("QUIT");
             //Does it matter whether or not they respond as expected? We should probably just disconnect anyway.
-            //if (resp.Code == ResponseCode.Goodbye) ;
-
             await Socket.DisconnectTaskAsync(true);
         }
 
         public async Task<Response> Reset()
         {
             //Resets the state of the connection to as if it were freshly opened
-            var response = await Send("RESE");
-            return response;
+            return await Send("RESE");
         }
 
         public async Task<Response> Send()
         {
-            var response = await Send("SEND");
-            return response;
+            return await Send("SEND");
         }
 
         public async Task<Response> Subject(string messageSubject)
@@ -211,43 +196,22 @@ namespace SNPPlib
                 throw new ArgumentNullException("messageSubject");
             if (!MessageFormat.IsMatch(messageSubject))
                 throw new ArgumentException("Subjects must be alphanumeric.", "messageSubject");
-
-            var response = await Send(String.Format("SUBJ {0}", messageSubject));
-            return response;
+            return await Send(String.Format("SUBJ {0}", messageSubject));
         }
 
         public async Task<Response> TwoWay()
         {
-            //throw new NotImplementedException();
-
-            var response = await Send("2WAY");
-            return response;
+            throw new NotImplementedException();
+            //return await Send("2WAY");
         }
 
         private async Task<Response> Send(string command, int responseSize = 1024)
         {
-            //check for crlf in command
-            command = command + "\r\n";
-            await Socket.SendTaskAsync(Encoding.ASCII.GetBytes(command), 0, Encoding.ASCII.GetByteCount(command));
+            //TODO: check for crlf in command?
+            await Socket.SendTaskAsync(command + "\r\n");
 
-            //var response = new StringBuilder();
-            //var buffer = new byte[256];
-            //do
-            //{
-            //    await Socket.ReceiveTaskAsync(buffer, 0, 256);
-            //    response.Append(Encoding.ASCII.GetString(buffer));
-            //}
-            //while (response.ToString().IndexOf("\r\n") == -1);
-
-            //return response.ToString();
-
-            //handling multi-part responses? ResponseCode.MultiLineResponse
-            //handling long responses?
-
-            var buffer = new byte[responseSize];//TODO: Proper buffer sizes????????
-            await Socket.ReceiveTaskAsync(buffer, 0, responseSize);
-            var response = new Response(Encoding.ASCII.GetString(buffer));
-
+            //handling multi-part responses? ResponseCode.MultiLineResponse; handling long responses?
+            var response = new Response(await Socket.ReceiveTaskAsync(responseSize));
             if (response.Code == ResponseCode.FatalError)
                 await Socket.DisconnectTaskAsync(true);//Do we want to do anything to the response/throw?
             return response;

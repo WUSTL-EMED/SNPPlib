@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SNPPlib
@@ -22,9 +23,21 @@ namespace SNPPlib
             return Task.Factory.FromAsync<int>(socket.BeginSend(buffer, offset, size, flags, (i) => { }, socket), socket.EndSend);
         }
 
+        public static Task<int> SendTaskAsync(this Socket socket, string data, Encoding encoding = null, SocketFlags flags = SocketFlags.None)
+        {
+            return socket.SendTaskAsync((encoding ?? Encoding.ASCII).GetBytes(data), 0, (encoding ?? Encoding.ASCII).GetByteCount(data), flags);
+        }
+
         public static Task<int> ReceiveTaskAsync(this Socket socket, byte[] buffer, int offset, int size, SocketFlags flags = SocketFlags.None)
         {
             return Task.Factory.FromAsync<int>(socket.BeginReceive(buffer, offset, size, flags, null, socket), socket.EndReceive);
+        }
+
+        public static async Task<string> ReceiveTaskAsync(this Socket socket, int size, Encoding encoding = null, SocketFlags flags = SocketFlags.None)//buffer size?
+        {
+            var buffer = new byte[size];
+            await socket.ReceiveTaskAsync(buffer, 0, size, flags);
+            return (encoding ?? Encoding.ASCII).GetString(buffer).TrimEnd('\0');
         }
 
         public static Task<Socket> AcceptTaskAsync(this Socket socket)
