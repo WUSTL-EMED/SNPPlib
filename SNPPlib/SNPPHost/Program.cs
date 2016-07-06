@@ -8,12 +8,12 @@ namespace SNPPHost
     {
         private static void Main(string[] args)
         {
-            Task.Run(async () => await MainAsync(args)).Wait();
+            Task.Run(async () => await MainAsyncServer()).Wait();
         }
 
-        private static async Task MainAsync(string[] args)
+        private static async Task MainAsyncServer()
         {
-            var server = new Server();
+            var server = new SnppServer();
 
             //Not a standard command.
             server.AddCommand("TEST", async (id, arg) =>
@@ -25,7 +25,7 @@ namespace SNPPHost
             {
                 return await Task.FromResult("This is a test command.");
             });
-            
+
             var tokenSource = await server.Listen();
 
             Console.WriteLine("Press any key to exit...");

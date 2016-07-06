@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SNPPlib
 {
@@ -29,6 +26,10 @@ namespace SNPPlib
 
         public string Message { get; private set; }
 
+        private Response()
+        {
+        }
+
         public Response(string response)
         {
             var code = default(ResponseCode);
@@ -46,6 +47,11 @@ namespace SNPPlib
             }
 
             Message = String.Join("\r\n", responseLines);
+        }
+
+        public static Response FatalResponse(string message = default(string))
+        {
+            return new Response() { Code = ResponseCode.FatalError, Message = message };
         }
     }
 }

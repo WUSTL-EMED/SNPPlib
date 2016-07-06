@@ -2,33 +2,89 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SNPPlib.Config;
 
 namespace SNPPlib
 {
-    public class Server
+    public class SnppServer : IDisposable
     {
-        public Server(IPAddress address, ushort port)
+        #region Constructors
+
+        /// <summary>
+        /// Create a SnppServer object pointing to a given IPAddress and port.
+        /// </summary>
+        /// <param name="address">The IPAddress of the server.</param>
+        /// <param name="port">The port of the server.</param>
+        public SnppServer(IPAddress address, ushort port)
         {
             Address = address;
             Port = port;
             Commands = new Dictionary<string, Func<Guid, string, Task<string>>>();
         }
 
-        public Server(string host = "localhost", ushort port = 444)
+        /// <summary>
+        /// Create a SnppServer object pointing to a given host name and port.
+        /// </summary>
+        /// <param name="host">The host of the server.</param>
+        /// <param name="port">The port of the server.</param>
+        public SnppServer(string host, ushort port)
             : this(Dns.GetHostEntry(host).AddressList[0], port)
         {
+            _Host = host;
         }
 
-        private IPAddress Address { get; set; }
+        /// <summary>
+        /// Create a SnppServer object pointing to a configured server.
+        /// </summary>
+        /// <param name="name">The name of the configured server or nothing if there is one unnamed server configured.</param>
+        public SnppServer(string name = null)
+            : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
+        {
+            _Host = SnppConfig.GetHost(name);
+        }
+
+        #endregion Constructors
+
+        /// <summary>
+        /// The IPAddress of the server.
+        /// </summary>
+        public IPAddress Address
+        {
+            get;
+            private set;
+            //settable until listening?
+        }
+
+        /// <summary>
+        /// The host name of the server.
+        /// </summary>
+        public string Host
+        {
+            get
+            {
+                return _Host ?? Address.ToString();
+            }
+            //settable until listening?
+        }
+
+        /// <summary>
+        /// The port of the server.
+        /// </summary>
+        public ushort Port {
+            get;
+            private set;
+            //settable until listening?
+        }
+
+        private string _Host { get; set; }
 
         private Dictionary<string, Func<Guid, string, Task<string>>> Commands { get; set; }
 
-        private ushort Port { get; set; }
-
         private Socket Socket { get; set; }
+
+        #region Methods
 
         public void AddCommand(string command, Func<Guid, string, Task<string>> handler)
         {
@@ -41,7 +97,9 @@ namespace SNPPlib
             //Allow specifying port here and listen on more than one port?
 
             var local = new IPEndPoint(Address, Port);
-            Socket = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            if (Socket == null)//The socket _should_ be reusable.
+                Socket = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
@@ -161,5 +219,34 @@ namespace SNPPlib
 
             return await Task.FromResult(tokenSource);
         }
+
+        #endregion Methods
+
+        #region IDisposable
+
+        ~SnppServer()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (Socket != null)
+                {
+                    Socket.Dispose();
+                    Socket = null;
+                }
+            }
+        }
+
+        #endregion IDisposable
     }
 }
