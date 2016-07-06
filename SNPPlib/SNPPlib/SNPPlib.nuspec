@@ -11,12 +11,19 @@
         <iconUrl>https://avatars0.githubusercontent.com/u/10945804?s=128</iconUrl>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
         <description>$description$</description>
-        <copyright>Copyright © WUSM 2016</copyright>
+        <copyright>Copyright © 2016 Aaron Papp</copyright>
         <language>en-US</language>
-        <tags>wctp</tags>
+        <tags>snpp</tags>
         <frameworkAssemblies>
-            <frameworkAssembly assemblyName="Microsoft.CSharp" />
-            <frameworkAssembly assemblyName="System" />
+          <frameworkAssembly assemblyName="Microsoft.CSharp" />
+          <frameworkAssembly assemblyName="System" />
+          <frameworkAssembly assemblyName="System.configuration" />
+          <frameworkAssembly assemblyName="System.Core" />
+          <frameworkAssembly assemblyName="System.Data" />
+          <frameworkAssembly assemblyName="System.Data.DataSetExtensions" />
+          <frameworkAssembly assemblyName="System.Net.Http" />
+          <frameworkAssembly assemblyName="System.Xml" />
+          <frameworkAssembly assemblyName="System.Xml.Linq" />
         </frameworkAssemblies>
     </metadata>
 </package>
