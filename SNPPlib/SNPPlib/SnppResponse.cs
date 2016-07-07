@@ -20,17 +20,17 @@ namespace SNPPlib
         MaximumEntriesExceeded = 552
     }
 
-    public class Response
+    public class SnppResponse
     {
         public ResponseCode Code { get; private set; }
 
         public string Message { get; private set; }
 
-        private Response()
+        private SnppResponse()
         {
         }
 
-        public Response(string response)
+        public SnppResponse(string response)
         {
             var code = default(ResponseCode);
             if (Enum.TryParse(response.Substring(0, 3), out code) && !Enum.IsDefined(typeof(ResponseCode), code))
@@ -49,9 +49,9 @@ namespace SNPPlib
             Message = String.Join("\r\n", responseLines);
         }
 
-        public static Response FatalResponse(string message = default(string))
+        public static SnppResponse FatalResponse(string message = default(string))
         {
-            return new Response() { Code = ResponseCode.FatalError, Message = message };
+            return new SnppResponse() { Code = ResponseCode.FatalError, Message = message };
         }
     }
 }

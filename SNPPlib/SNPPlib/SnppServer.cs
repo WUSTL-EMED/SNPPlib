@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using SNPPlib.Config;
+using SNPPlib.Extensions;
 
 namespace SNPPlib
 {
@@ -27,7 +28,7 @@ namespace SNPPlib
         /// <summary>
         /// Create a SnppServer object pointing to a given host name and port.
         /// </summary>
-        /// <param name="host">The host of the server.</param>
+        /// <param name="host">The host name of the server.</param>
         /// <param name="port">The port of the server.</param>
         public SnppServer(string host, ushort port)
             : this(Dns.GetHostEntry(host).AddressList[0], port)

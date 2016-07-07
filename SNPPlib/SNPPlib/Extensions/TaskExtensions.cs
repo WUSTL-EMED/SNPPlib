@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace SNPPlib
+namespace SNPPlib.Extensions
 {
     public static class TaskExtensions
     {

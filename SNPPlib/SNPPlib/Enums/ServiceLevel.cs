@@ -1,19 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SNPPlib
 {
-    #region Enums
-
-    public enum AlertLevel : byte
-    {
-        DoNotAlert = 0,
-        Alert = 1
-    }
-
     public enum ServiceLevel : byte
     {
         Priority = 0,
@@ -29,6 +17,4 @@ namespace SNPPlib
         CarrierSpecific3 = 10,
         CarrierSpecific4 = 11
     }
-
-    #endregion Enums
 }

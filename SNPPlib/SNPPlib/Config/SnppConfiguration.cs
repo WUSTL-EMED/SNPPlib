@@ -11,7 +11,7 @@ namespace SNPPlib.Config
         public ServerCollection()
         {
             ServerConfigElement details = (ServerConfigElement)CreateNewElement();
-            if (details.Name != "")
+            if (!String.IsNullOrEmpty(details.Name))
                 Add(details);
         }
 
@@ -184,7 +184,7 @@ namespace SNPPlib.Config
         {
             get
             {
-                return (ServerCollection)base[""];
+                return (ServerCollection)base[String.Empty];
             }
         }
     }

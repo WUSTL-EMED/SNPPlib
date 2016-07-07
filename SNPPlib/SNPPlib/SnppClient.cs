@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using SNPPlib.Config;
+using SNPPlib.Extensions;
 
 namespace SNPPlib
 {
@@ -29,7 +30,7 @@ namespace SNPPlib
         /// <summary>
         /// Create a SnppClient object pointing to a given host name and port.
         /// </summary>
-        /// <param name="host">The host of the server.</param>
+        /// <param name="host">The host name of the server.</param>
         /// <param name="port">The port of the server.</param>
         /// <param name="loginId">The login id of the server.</param>
         /// <param name="password">The password of the server.</param>
@@ -115,7 +116,7 @@ namespace SNPPlib
         /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter <see cref="SnppMessage.Message"/> was empty.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter <see cref="SnppMessage.Pagers"/> contained no elements.</exception>
-        public async Task<Response> SendAsync(SnppMessage message)
+        public async Task<SnppResponse> SendAsync(SnppMessage message)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
@@ -128,10 +129,10 @@ namespace SNPPlib
             //Should we throw instead of returning the response? I don't know if we should consider that exceptional.
             try
             {
-                Response resp;
+                SnppResponse resp;
 
                 if (!await Client.ConnectAsync())
-                    return Response.FatalResponse(Resource.ConnectionError);//Throw instead?
+                    return SnppResponse.FatalResponse(Resource.ConnectionError);//Throw instead?
 
                 if (!String.IsNullOrWhiteSpace(LoginId))
                 {
@@ -221,7 +222,7 @@ namespace SNPPlib
         /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter <see cref="SnppMessage.Message"/> was empty.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter <see cref="SnppMessage.Pagers"/> contained no elements.</exception>
-        public Response Send(SnppMessage message)
+        public SnppResponse Send(SnppMessage message)
         {
             if (message == null)
                 throw new ArgumentNullException("message");
@@ -234,10 +235,10 @@ namespace SNPPlib
             //Should we throw instead of returning the response? I don't know if we should consider that exceptional.
             try
             {
-                Response resp;
+                SnppResponse resp;
 
                 if (!Client.Connect())
-                    return Response.FatalResponse(Resource.ConnectionError);//Throw instead?
+                    return SnppResponse.FatalResponse(Resource.ConnectionError);//Throw instead?
 
                 if (!String.IsNullOrWhiteSpace(LoginId))
                 {

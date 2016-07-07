@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SNPPlib
+namespace SNPPlib.Extensions
 {
     public static class SocketExtensions
     {

@@ -44,7 +44,8 @@
   <ItemGroup>
     <Compile Include="Config\SnppConfiguration.cs" />
     <Compile Include="Config\SnppConfig.cs" />
-    <Compile Include="Enums.cs" />
+    <Compile Include="Enums\AlertLevel.cs" />
+    <Compile Include="Enums\ServiceLevel.cs" />
     <Compile Include="PagerCollection.cs" />
     <Compile Include="Resource.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -54,10 +55,10 @@
     <Compile Include="SnppMessage.cs" />
     <Compile Include="SnppClient.cs" />
     <Compile Include="SnppClientProtocol.cs" />
-    <Compile Include="Response.cs" />
+    <Compile Include="SnppResponse.cs" />
     <Compile Include="SnppServer.cs" />
-    <Compile Include="SocketExtensions.cs" />
-    <Compile Include="TaskExtensions.cs" />
+    <Compile Include="Extensions\SocketExtensions.cs" />
+    <Compile Include="Extensions\TaskExtensions.cs" />
     <None Include="SNPPlib.nuspec" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
