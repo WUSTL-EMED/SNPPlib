@@ -13,20 +13,24 @@ namespace SNPPlib
 
         internal IList<string> Pagers { get; set; }
 
-        public new void Add(string pager)
+        public new void Add(string item)
         {
-            if (!SnppClientProtocol.PagerIdFormat.IsMatch(pager))
-                throw new ArgumentException(Resource.PagerIdNumeric, "pager");
-            Pagers.Add(pager);
+            if (!SnppClientProtocol.PagerIdFormat.IsMatch(item))
+                throw new ArgumentException(Resource.PagerIdNumeric, "item");
+            Pagers.Add(item);
         }
 
-        public void AddRange(IEnumerable<string> pagers)
+        /// <exception cref="System.ArgumentNullException">The <paramref name="items"/> parameter was null.</exception>
+        public void AddRange(IEnumerable<string> items)
         {
-            foreach (var pager in pagers)
+            if (items == null)
+                throw new ArgumentNullException("items");
+
+            foreach (var item in items)
             {
-                if (!SnppClientProtocol.PagerIdFormat.IsMatch(pager))
-                    throw new ArgumentException(Resource.PagerIdNumeric, "pager");
-                Pagers.Add(pager);
+                if (!SnppClientProtocol.PagerIdFormat.IsMatch(item))
+                    throw new ArgumentException(Resource.PagerIdNumeric, "items");
+                Pagers.Add(item);
             }
         }
 
@@ -35,18 +39,18 @@ namespace SNPPlib
             return String.Join(", ", Pagers);
         }
 
-        protected override void InsertItem(int index, string pager)
+        protected override void InsertItem(int index, string item)
         {
-            if (!SnppClientProtocol.PagerIdFormat.IsMatch(pager))
-                throw new ArgumentException(Resource.PagerIdNumeric, "pager");
-            Pagers.Insert(index, pager);
+            if (!SnppClientProtocol.PagerIdFormat.IsMatch(item))
+                throw new ArgumentException(Resource.PagerIdNumeric, "item");
+            Pagers.Insert(index, item);
         }
 
-        protected override void SetItem(int index, string pager)
+        protected override void SetItem(int index, string item)
         {
-            if (!SnppClientProtocol.PagerIdFormat.IsMatch(pager))
-                throw new ArgumentException(Resource.PagerIdNumeric, "pager");
-            Pagers[index] = pager;
+            if (!SnppClientProtocol.PagerIdFormat.IsMatch(item))
+                throw new ArgumentException(Resource.PagerIdNumeric, "item");
+            Pagers[index] = item;
         }
     }
 }

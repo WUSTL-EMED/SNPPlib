@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 
 namespace SNPPlib
 {
-    public enum ResponseCode : short
+    public enum ResponseCode
     {
         Malformed = 0,
-        MultiLineResponse = 214,//ends with a 250 response
+        MultilineResponse = 214,//ends with a 250 response
         SingleLineResponse = 218,
         GatewayReady = 220,
         Goodbye = 221,
@@ -30,7 +31,7 @@ namespace SNPPlib
         {
         }
 
-        public SnppResponse(string response)
+        internal SnppResponse(string response)
         {
             var code = default(ResponseCode);
             if (Enum.TryParse(response.Substring(0, 3), out code) && !Enum.IsDefined(typeof(ResponseCode), code))
@@ -41,7 +42,7 @@ namespace SNPPlib
             for (var i = responseLines.Count - 1; 0 <= i; i--)
             {
                 var responseLine = responseLines[i];
-                if (Code == ResponseCode.MultiLineResponse && responseLine.StartsWith(String.Format("{0} ", ResponseCode.Success)))
+                if (Code == ResponseCode.MultilineResponse && responseLine.StartsWith(String.Format(CultureInfo.InvariantCulture, "{0} ", (int)ResponseCode.Success), StringComparison.OrdinalIgnoreCase))
                     responseLines.RemoveAt(i);
                 responseLines[i] = responseLine.TrimStart(new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', });
             }
@@ -49,7 +50,7 @@ namespace SNPPlib
             Message = String.Join("\r\n", responseLines);
         }
 
-        public static SnppResponse FatalResponse(string message = default(string))
+        internal static SnppResponse FatalResponse(string message = default(string))
         {
             return new SnppResponse() { Code = ResponseCode.FatalError, Message = message };
         }

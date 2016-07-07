@@ -79,11 +79,11 @@ namespace SNPPlib {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Configured hostname is invalid..
+        ///   Looks up a localized string similar to Configured host name is invalid..
         /// </summary>
-        internal static string ConfigInvalidHostname {
+        internal static string ConfigInvalidHostName {
             get {
-                return ResourceManager.GetString("ConfigInvalidHostname", resourceCulture);
+                return ResourceManager.GetString("ConfigInvalidHostName", resourceCulture);
             }
         }
         
@@ -133,7 +133,7 @@ namespace SNPPlib {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An error occured attempting to connect to the server..
+        ///   Looks up a localized string similar to An error occurred attempting to connect to the server..
         /// </summary>
         internal static string ConnectionError {
             get {

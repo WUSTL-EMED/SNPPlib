@@ -2,7 +2,7 @@
 
 namespace SNPPlib
 {
-    public enum ServiceLevel : byte
+    public enum ServiceLevel
     {
         Priority = 0,
         Normal = 1,//default priority if not specified for a set of commands

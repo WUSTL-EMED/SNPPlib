@@ -29,6 +29,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseNuget|AnyCPU'">
     <OutputPath>bin\ReleaseNuget\</OutputPath>
@@ -39,18 +41,21 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigValidators\UShortValidator.cs" />
     <Compile Include="Config\SnppConfiguration.cs" />
     <Compile Include="Config\SnppConfig.cs" />
     <Compile Include="ConfigValidators\HostnameValidator.cs" />
     <Compile Include="Enums\AlertLevel.cs" />
     <Compile Include="Enums\ServiceLevel.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PagerCollection.cs" />
     <Compile Include="Resource.Designer.cs">
       <AutoGen>True</AutoGen>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -12,10 +13,10 @@ namespace SNPPlib
 {
     public class SnppClientProtocol : IDisposable
     {
-        public static Regex CallerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);//is this numeric or alphanumeric?
-        public static Regex LoginIdFormat = new Regex(@"^[a-z0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);//The spec says alphanumeric, what about punctuation?
-        public static Regex PagerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);
+        public static readonly Regex CallerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);//is this numeric or alphanumeric?
+        public static readonly Regex LoginIdFormat = new Regex(@"^[a-z0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);//The spec says alphanumeric, what about punctuation?
+        public static readonly Regex PagerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);
 
         #region Constructors
 
@@ -24,7 +25,7 @@ namespace SNPPlib
         /// </summary>
         /// <param name="address">The IPAddress of the server.</param>
         /// <param name="port">The port of the server.</param>
-        public SnppClientProtocol(IPAddress address, ushort port)
+        public SnppClientProtocol(IPAddress address, int port)
         {
             Address = address;
             Port = port;
@@ -35,7 +36,7 @@ namespace SNPPlib
         /// </summary>
         /// <param name="host">The host name of the server.</param>
         /// <param name="port">The port of the server.</param>
-        public SnppClientProtocol(string host, ushort port)
+        public SnppClientProtocol(string host, int port)
             : this(Dns.GetHostEntry(host).AddressList[0], port)
         {
             //What if there is more than one ip?
@@ -43,14 +44,22 @@ namespace SNPPlib
         }
 
         /// <summary>
-        /// Create a SnppClientProtocol object pointing to a configured server.
+        /// Create a SnppClientProtocol object pointing to a named configured server.
         /// </summary>
-        /// <param name="name">The name of the configured server or nothing if there is one unnamed server configured.</param>
-        public SnppClientProtocol(string name = null)
+        /// <param name="name">The name of the configured server.</param>
+        public SnppClientProtocol(string name)
             : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
         {
-            //What if there is more than one ip?
             _Host = SnppConfig.GetHost(name);
+        }
+
+        /// <summary>
+        /// Create a SnppClientProtocol object pointing to a single unnamed configured server.
+        /// </summary>
+        public SnppClientProtocol()
+            : this(Dns.GetHostEntry(SnppConfig.GetHost(null)).AddressList[0], SnppConfig.GetPort(null))
+        {
+            _Host = SnppConfig.GetHost(null);
         }
 
         #endregion Constructors
@@ -82,7 +91,7 @@ namespace SNPPlib
         /// <summary>
         /// The port of the server.
         /// </summary>
-        public ushort Port
+        public int Port
         {
             get;
             private set;
@@ -102,11 +111,11 @@ namespace SNPPlib
         /// <summary>
         /// Send an alert level (ALER) command asynchronously.
         /// </summary>
-        /// <param name="level">The alert level.</param>
+        /// <param name="alertLevel">The alert level.</param>
         /// <returns>The response.</returns>
-        public async Task<SnppResponse> AlertAsync(AlertLevel level)
+        public async Task<SnppResponse> AlertAsync(AlertLevel alertLevel)
         {
-            return await SendAsync(String.Format("ALER {0}", (byte)level));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "ALER {0}", (int)alertLevel));
         }
 
         /// <summary>
@@ -116,7 +125,7 @@ namespace SNPPlib
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="callerId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="callerId"/> parameter was not numeric.</exception>
-        public async Task<SnppResponse> CallerIdAsync(string callerId)
+        public async Task<SnppResponse> CallerAsync(string callerId)
         {
             if (callerId == null)
                 throw new ArgumentNullException("callerId");
@@ -125,7 +134,7 @@ namespace SNPPlib
             if (!MessageFormat.IsMatch(callerId))
                 throw new ArgumentException(Resource.CallerIdNumeric, "callerId");
 
-            return await SendAsync(String.Format("CALL {0}", callerId));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "CALL {0}", callerId));
         }
 
         /// <summary>
@@ -154,33 +163,33 @@ namespace SNPPlib
         /// </summary>
         /// <param name="alternateArea">The alternate coverage area id.</param>
         /// <returns>The response.</returns>
-        public async Task<SnppResponse> CoverageAsync(ushort alternateArea)
+        public async Task<SnppResponse> CoverageAsync(int alternateArea)
         {
             //are areas always numbers?
-            return await SendAsync(String.Format("COVE {0}", alternateArea));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "COVE {0}", alternateArea));
         }
 
         /// <summary>
         /// Send a multi-line message (DATA) command asynchronously.
         /// </summary>
-        /// <param name="message">The message lines.  Must be alphanumeric.</param>
+        /// <param name="text">The message lines.  Must be alphanumeric.</param>
         /// <returns>The response.</returns>
-        /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter contained no elements.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was not alphanumeric.</exception>
-        public async Task<SnppResponse> DataAsync(IEnumerable<string> message)
+        /// <exception cref="System.ArgumentNullException">The <paramref name="text"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter contained no elements.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was not alphanumeric.</exception>
+        public async Task<SnppResponse> DataAsync(IEnumerable<string> text)
         {
-            if (message == null)
-                throw new ArgumentNullException("message");
-            if (!message.Any(_ => !String.IsNullOrWhiteSpace(_)))//TODO: Strip out blank lines?
-                throw new ArgumentException(Resource.MessageRequired, "message");
-            if (message.Any(_ => !MessageFormat.IsMatch(_)))
-                throw new ArgumentException(Resource.MessageAlphanumeric, "message");
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (!text.Any(_ => !String.IsNullOrWhiteSpace(_)))//TODO: Strip out blank lines?
+                throw new ArgumentException(Resource.MessageRequired, "text");
+            if (text.Any(_ => !MessageFormat.IsMatch(_)))
+                throw new ArgumentException(Resource.MessageAlphanumeric, "text");
 
             var response = await SendAsync("DATA");
             if (response.Code == ResponseCode.BeginInput)
             {
-                foreach (var line in message)
+                foreach (var line in text)
                 {
                     await SendAsync(line);
                 }
@@ -210,27 +219,52 @@ namespace SNPPlib
         /// Send a hold-until (HOLD) command asynchronously.
         /// </summary>
         /// <param name="time">The DateTime to hold the message until.</param>
-        /// <param name="gmtDifference">The offset from GMT of the hold time.</param>
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="time"/> parameter was null.</exception>
-        public async Task<SnppResponse> HoldUntilAsync(DateTime time, TimeSpan? gmtDifference = null)
+        public async Task<SnppResponse> HoldUntilAsync(DateTime time)
+        {
+            return await HoldUntilAsync(time, TimeSpan.Zero);
+        }
+
+        /// <summary>
+        /// Send a hold-until (HOLD) command asynchronously.
+        /// </summary>
+        /// <param name="time">The DateTime to hold the message until.</param>
+        /// <param name="gmtOffset">The offset from GMT of the hold time.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="time"/> parameter was null.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "gmt", Justification = "It stands for greenwich mean time.")]
+        public async Task<SnppResponse> HoldUntilAsync(DateTime time, TimeSpan gmtOffset)
         {
             if (time == null)
                 throw new ArgumentNullException("time");
             //Check if the date is in the past? I don't know if it matters.
 
-            var gmt = gmtDifference.HasValue ? (gmtDifference < TimeSpan.Zero ? "-" : String.Empty) + gmtDifference.Value.ToString("hhmm") : String.Empty;
-            return await SendAsync(String.Format("HOLD {0} {1}", time.ToString("yyMMddHHmmss"), gmt).TrimEnd());
+            var gmt = gmtOffset != TimeSpan.Zero ? (gmtOffset < TimeSpan.Zero ? "-" : String.Empty) + gmtOffset.ToString("hhmm", CultureInfo.InvariantCulture) : String.Empty;
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "HOLD {0} {1}", time.ToString("yyMMddHHmmss", CultureInfo.InvariantCulture), gmt).TrimEnd());
         }
 
         /// <summary>
         /// Send a service level (LEVE) command asynchronously.
+        /// <para>If this command is not issued the default service level is "Normal".</para>
         /// </summary>
-        /// <param name="level">The service level.</param>
+        /// <param name="serviceLevel">The service level.</param>
         /// <returns>The response.</returns>
-        public async Task<SnppResponse> LevelAsync(ServiceLevel level = ServiceLevel.Normal)
+        public async Task<SnppResponse> LevelAsync(ServiceLevel serviceLevel)
         {
-            return await SendAsync(String.Format("LEVE {0}", (byte)level));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "LEVE {0}", (int)serviceLevel));
+        }
+
+        /// <summary>
+        /// Send a login (LOGI) command asynchronously.
+        /// </summary>
+        /// <param name="loginId">The login id.  Must be alphanumeric.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="loginId"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="loginId"/> parameter was not alphanumeric.</exception>
+        public async Task<SnppResponse> LoginAsync(string loginId)
+        {
+            return await LoginAsync(loginId, null);
         }
 
         /// <summary>
@@ -241,7 +275,7 @@ namespace SNPPlib
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="loginId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="loginId"/> parameter was not alphanumeric.</exception>
-        public async Task<SnppResponse> LoginAsync(string loginId, string password = null)
+        public async Task<SnppResponse> LoginAsync(string loginId, string password)
         {
             if (loginId == null)
                 throw new ArgumentNullException("loginId");
@@ -252,40 +286,53 @@ namespace SNPPlib
 
             //TODO: Is there a specific allow format for passwords? e.g. alpha-numeric.
 
-            return await SendAsync(String.Format("LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
         }
 
         /// <summary>
         /// Send a single-line message (MESS) command asynchronously.
         /// </summary>
-        /// <param name="message">The message.  Must be alphanumeric.</param>
+        /// <param name="text">The message.  Must be alphanumeric.</param>
         /// <returns>The response.</returns>
-        /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was empty.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was not alphanumeric.</exception>
-        public async Task<SnppResponse> MessageAsync(string message)
+        /// <exception cref="System.ArgumentNullException">The <paramref name="text"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was empty.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was not alphanumeric.</exception>
+        public async Task<SnppResponse> MessageAsync(string text)
         {
             //message should be alphanumeric
             //message is single line
             //if issued more than once before SEND should produce 503 ERROR, Message Already Entered
-            if (message == null)
-                throw new ArgumentNullException("message");
-            if (String.IsNullOrWhiteSpace(message))
-                throw new ArgumentException(Resource.MessageRequired, "message");
-            if (!MessageFormat.IsMatch(message))
-                throw new ArgumentException(Resource.MessageAlphanumeric, "message");
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (String.IsNullOrWhiteSpace(text))
+                throw new ArgumentException(Resource.MessageRequired, "text");
+            if (!MessageFormat.IsMatch(text))
+                throw new ArgumentException(Resource.MessageAlphanumeric, "text");
 
-            return await SendAsync(String.Format("MESS {0}", message));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "MESS {0}", text));
         }
 
         /// <summary>
         /// Send a pager id (PAGE) command asynchronously.
         /// </summary>
-        /// <param name="message">The pager id.  Must be numeric.</param>
+        /// <param name="pagerId">The pager id.  Must be numeric.</param>
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="pagerId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="pagerId"/> parameter was not numeric.</exception>
-        public async Task<SnppResponse> PagerAsync(string pagerId, string password = null)//valid password chars?
+        public async Task<SnppResponse> PagerAsync(string pagerId)//valid password chars?
+        {
+            return await PagerAsync(pagerId, null);
+        }
+
+        /// <summary>
+        /// Send a pager id (PAGE) command asynchronously.
+        /// </summary>
+        /// <param name="pagerId">The pager id.  Must be numeric.</param>
+        /// <param name="password">The pager password.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="pagerId"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="pagerId"/> parameter was not numeric.</exception>
+        public async Task<SnppResponse> PagerAsync(string pagerId, string password)//valid password chars?
         {
             if (pagerId == null)
                 throw new ArgumentNullException("pagerId");//alphanumeric or just numeric?
@@ -294,7 +341,7 @@ namespace SNPPlib
             if (!PagerIdFormat.IsMatch(pagerId))
                 throw new ArgumentException(Resource.PagerIdNumeric, "pagerId");
 
-            return await SendAsync(String.Format("PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
         }
 
         /// <summary>
@@ -344,7 +391,7 @@ namespace SNPPlib
                 throw new ArgumentException(Resource.SubjectTextRequired, "messageSubject");
             if (!MessageFormat.IsMatch(messageSubject))
                 throw new ArgumentException(Resource.SubjectAlphanumeric, "messageSubject");
-            return await SendAsync(String.Format("SUBJ {0}", messageSubject));
+            return await SendAsync(String.Format(CultureInfo.InvariantCulture, "SUBJ {0}", messageSubject));
         }
 
         /// <summary>
@@ -379,11 +426,11 @@ namespace SNPPlib
         /// <summary>
         /// Send an alert level (ALER) command.
         /// </summary>
-        /// <param name="level">The alert level.</param>
+        /// <param name="alertLevel">The alert level.</param>
         /// <returns>The response.</returns>
-        public SnppResponse Alert(AlertLevel level)
+        public SnppResponse Alert(AlertLevel alertLevel)
         {
-            return Send(String.Format("ALER {0}", (byte)level));
+            return Send(String.Format(CultureInfo.InvariantCulture, "ALER {0}", (int)alertLevel));
         }
 
         /// <summary>
@@ -393,7 +440,7 @@ namespace SNPPlib
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="callerId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="callerId"/> parameter was not numeric.</exception>
-        public SnppResponse CallerId(string callerId)
+        public SnppResponse Caller(string callerId)
         {
             if (callerId == null)
                 throw new ArgumentNullException("callerId");
@@ -402,7 +449,7 @@ namespace SNPPlib
             if (!MessageFormat.IsMatch(callerId))
                 throw new ArgumentException(Resource.CallerIdNumeric, "callerId");
 
-            return Send(String.Format("CALL {0}", callerId));
+            return Send(String.Format(CultureInfo.InvariantCulture, "CALL {0}", callerId));
         }
 
         /// <summary>
@@ -431,33 +478,33 @@ namespace SNPPlib
         /// </summary>
         /// <param name="alternateArea">The alternate coverage area id.</param>
         /// <returns>The response.</returns>
-        public SnppResponse Coverage(ushort alternateArea)
+        public SnppResponse Coverage(int alternateArea)
         {
             //are areas always numbers?
-            return Send(String.Format("COVE {0}", alternateArea));
+            return Send(String.Format(CultureInfo.InvariantCulture, "COVE {0}", alternateArea));
         }
 
         /// <summary>
         /// Send a multi-line message (DATA) command.
         /// </summary>
-        /// <param name="message">The message lines.  Must be alphanumeric.</param>
+        /// <param name="text">The message lines.  Must be alphanumeric.</param>
         /// <returns>The response.</returns>
-        /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter contained no elements.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was not alphanumeric.</exception>
-        public SnppResponse Data(IEnumerable<string> message)
+        /// <exception cref="System.ArgumentNullException">The <paramref name="text"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter contained no elements.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was not alphanumeric.</exception>
+        public SnppResponse Data(IEnumerable<string> text)
         {
-            if (message == null)
-                throw new ArgumentNullException("message");
-            if (!message.Any(_ => !String.IsNullOrWhiteSpace(_)))//TODO: Strip out blank lines?
-                throw new ArgumentException(Resource.MessageRequired, "message");
-            if (message.Any(_ => !MessageFormat.IsMatch(_)))
-                throw new ArgumentException(Resource.MessageAlphanumeric, "message");
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (!text.Any(_ => !String.IsNullOrWhiteSpace(_)))//TODO: Strip out blank lines?
+                throw new ArgumentException(Resource.MessageRequired, "text");
+            if (text.Any(_ => !MessageFormat.IsMatch(_)))
+                throw new ArgumentException(Resource.MessageAlphanumeric, "text");
 
             var response = Send("DATA");
             if (response.Code == ResponseCode.BeginInput)
             {
-                foreach (var line in message)
+                foreach (var line in text)
                 {
                     Send(line);
                 }
@@ -487,27 +534,52 @@ namespace SNPPlib
         /// Send a hold-until (HOLD) command.
         /// </summary>
         /// <param name="time">The DateTime to hold the message until.</param>
-        /// <param name="gmtDifference">The offset from GMT of the hold time.</param>
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="time"/> parameter was null.</exception>
-        public SnppResponse HoldUntil(DateTime time, TimeSpan? gmtDifference = null)
+        public SnppResponse HoldUntil(DateTime time)
+        {
+            return HoldUntil(time, TimeSpan.Zero);
+        }
+
+        /// <summary>
+        /// Send a hold-until (HOLD) command.
+        /// </summary>
+        /// <param name="time">The DateTime to hold the message until.</param>
+        /// <param name="gmtOffset">The offset from GMT of the hold time.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="time"/> parameter was null.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "gmt", Justification = "It stands for greenwich mean time.")]
+        public SnppResponse HoldUntil(DateTime time, TimeSpan gmtOffset)
         {
             if (time == null)
                 throw new ArgumentNullException("time");
             //Check if the date is in the past? I don't know if it matters.
 
-            var gmt = gmtDifference.HasValue ? (gmtDifference < TimeSpan.Zero ? "-" : String.Empty) + gmtDifference.Value.ToString("hhmm") : String.Empty;
-            return Send(String.Format("HOLD {0} {1}", time.ToString("yyMMddHHmmss"), gmt).TrimEnd());
+            var gmt = gmtOffset != TimeSpan.Zero ? (gmtOffset < TimeSpan.Zero ? "-" : String.Empty) + gmtOffset.ToString("hhmm", CultureInfo.InvariantCulture) : String.Empty;
+            return Send(String.Format(CultureInfo.InvariantCulture, "HOLD {0} {1}", time.ToString("yyMMddHHmmss", CultureInfo.InvariantCulture), gmt).TrimEnd());
         }
 
         /// <summary>
         /// Send a service level (LEVE) command.
+        /// <para>If this command is not issued the default service level is "Normal".</para>
         /// </summary>
-        /// <param name="level">The service level.</param>
+        /// <param name="serviceLevel">The service level.</param>
         /// <returns>The response.</returns>
-        public SnppResponse Level(ServiceLevel level = ServiceLevel.Normal)
+        public SnppResponse Level(ServiceLevel serviceLevel)
         {
-            return Send(String.Format("LEVE {0}", (byte)level));
+            return Send(String.Format(CultureInfo.InvariantCulture, "LEVE {0}", (int)serviceLevel));
+        }
+
+        /// <summary>
+        /// Send a login (LOGI) command.
+        /// </summary>
+        /// <param name="loginId">The login id.  Must be alphanumeric.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="loginId"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="loginId"/> parameter was not alphanumeric.</exception>
+        public SnppResponse Login(string loginId)
+        {
+            return Login(loginId, null);
         }
 
         /// <summary>
@@ -518,7 +590,7 @@ namespace SNPPlib
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="loginId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="loginId"/> parameter was not alphanumeric.</exception>
-        public SnppResponse Login(string loginId, string password = null)
+        public SnppResponse Login(string loginId, string password)
         {
             if (loginId == null)
                 throw new ArgumentNullException("loginId");//alphanumeric or just numeric?
@@ -527,40 +599,53 @@ namespace SNPPlib
             if (!LoginIdFormat.IsMatch(loginId))
                 throw new ArgumentException(Resource.LoginIdAlphanumeric, "loginId");
 
-            return Send(String.Format("LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
+            return Send(String.Format(CultureInfo.InvariantCulture, "LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
         }
 
         /// <summary>
         /// Send a single-line message (MESS) command.
         /// </summary>
-        /// <param name="message">The message.  Must be alphanumeric.</param>
+        /// <param name="text">The message.  Must be alphanumeric.</param>
         /// <returns>The response.</returns>
-        /// <exception cref="System.ArgumentNullException">The <paramref name="message"/> parameter was null.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was empty.</exception>
-        /// <exception cref="System.ArgumentException">The <paramref name="message"/> parameter was not alphanumeric.</exception>
-        public SnppResponse Message(string message)
+        /// <exception cref="System.ArgumentNullException">The <paramref name="text"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was empty.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="text"/> parameter was not alphanumeric.</exception>
+        public SnppResponse Message(string text)
         {
             //message should be alphanumeric
             //message is single line
             //if issued more than once before SEND should produce 503 ERROR, Message Already Entered
-            if (message == null)
-                throw new ArgumentNullException("message");
-            if (String.IsNullOrWhiteSpace(message))
-                throw new ArgumentException(Resource.MessageRequired, "message");
-            if (!MessageFormat.IsMatch(message))
-                throw new ArgumentException(Resource.MessageAlphanumeric, "message");
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (String.IsNullOrWhiteSpace(text))
+                throw new ArgumentException(Resource.MessageRequired, "text");
+            if (!MessageFormat.IsMatch(text))
+                throw new ArgumentException(Resource.MessageAlphanumeric, "text");
 
-            return Send(String.Format("MESS {0}", message));
+            return Send(String.Format(CultureInfo.InvariantCulture, "MESS {0}", text));
         }
 
         /// <summary>
         /// Send a pager id (PAGE) command.
         /// </summary>
-        /// <param name="message">The pager id.  Must be numeric.</param>
+        /// <param name="pagerId">The pager id.  Must be numeric.</param>
         /// <returns>The response.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="pagerId"/> parameter was null.</exception>
         /// <exception cref="System.ArgumentException">The <paramref name="pagerId"/> parameter was not numeric.</exception>
-        public SnppResponse Pager(string pagerId, string password = null)//valid password chars?
+        public SnppResponse Pager(string pagerId)//valid password chars?
+        {
+            return Pager(pagerId, null);
+        }
+
+        /// <summary>
+        /// Send a pager id (PAGE) command.
+        /// </summary>
+        /// <param name="pagerId">The pager id.  Must be numeric.</param>
+        /// <param name="password">The pager password.</param>
+        /// <returns>The response.</returns>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="pagerId"/> parameter was null.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="pagerId"/> parameter was not numeric.</exception>
+        public SnppResponse Pager(string pagerId, string password)//valid password chars?
         {
             if (pagerId == null)
                 throw new ArgumentNullException("pagerId");//alphanumeric or just numeric?
@@ -569,7 +654,7 @@ namespace SNPPlib
             if (!PagerIdFormat.IsMatch(pagerId))
                 throw new ArgumentException(Resource.PagerIdNumeric, "pagerId");
 
-            return Send(String.Format("PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
+            return Send(String.Format(CultureInfo.InvariantCulture, "PAGE {0} {1}", pagerId, password ?? String.Empty).TrimEnd());
         }
 
         /// <summary>
@@ -619,7 +704,7 @@ namespace SNPPlib
                 throw new ArgumentException(Resource.SubjectTextRequired, "messageSubject");
             if (!MessageFormat.IsMatch(messageSubject))
                 throw new ArgumentException(Resource.SubjectAlphanumeric, "messageSubject");
-            return Send(String.Format("SUBJ {0}", messageSubject));
+            return Send(String.Format(CultureInfo.InvariantCulture, "SUBJ {0}", messageSubject));
         }
 
         /// <summary>
@@ -628,9 +713,9 @@ namespace SNPPlib
         /// </summary>
         /// <returns>The response.</returns>
         /// <exception cref="System.NotImplementedException">This method is not implemented.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "This method is not implemented yet.  This supression won't be needed once it is.")]
         public SnppResponse TwoWay()
         {
-            Task.FromResult(false);//suppress warning for now
             throw new NotImplementedException();
             //return Send("2WAY");
         }

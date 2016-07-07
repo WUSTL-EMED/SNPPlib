@@ -18,7 +18,7 @@ namespace SNPPlib
         /// </summary>
         /// <param name="address">The IPAddress of the server.</param>
         /// <param name="port">The port of the server.</param>
-        public SnppServer(IPAddress address, ushort port)
+        public SnppServer(IPAddress address, int port)
         {
             Address = address;
             Port = port;
@@ -30,20 +30,29 @@ namespace SNPPlib
         /// </summary>
         /// <param name="host">The host name of the server.</param>
         /// <param name="port">The port of the server.</param>
-        public SnppServer(string host, ushort port)
+        public SnppServer(string host, int port)
             : this(Dns.GetHostEntry(host).AddressList[0], port)
         {
             _Host = host;
         }
 
         /// <summary>
-        /// Create a SnppServer object pointing to a configured server.
+        /// Create a SnppServer object pointing to a named configured server.
         /// </summary>
-        /// <param name="name">The name of the configured server or nothing if there is one unnamed server configured.</param>
-        public SnppServer(string name = null)
+        /// <param name="name">The name of the configured server.</param>
+        public SnppServer(string name)
             : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
         {
             _Host = SnppConfig.GetHost(name);
+        }
+
+        /// <summary>
+        /// Create a SnppServer object pointing to a single unnamed configured server.
+        /// </summary>
+        public SnppServer()
+            : this(Dns.GetHostEntry(SnppConfig.GetHost(null)).AddressList[0], SnppConfig.GetPort(null))
+        {
+            _Host = SnppConfig.GetHost(null);
         }
 
         #endregion Constructors
@@ -75,7 +84,8 @@ namespace SNPPlib
         /// <summary>
         /// The port of the server.
         /// </summary>
-        public ushort Port {
+        public int Port
+        {
             get;
             private set;
             //settable until listening?
@@ -91,12 +101,19 @@ namespace SNPPlib
 
         #region Methods
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
         public void AddCommand(string command, Func<Guid, string, Task<string>> handler)
         {
+            //TODO: Better way of handling the registering of functions?
             Commands.Add(command, handler);
         }
 
-        public async Task<CancellationTokenSource> Listen(int backlog = 100)
+        public async Task<CancellationTokenSource> Listen()
+        {
+            return await Listen(100);
+        }
+
+        public async Task<CancellationTokenSource> Listen(int backlog)
         {
             //TODO: Only allow single call?
             //Allow specifying port here and listen on more than one port?

@@ -5,15 +5,16 @@ using SNPPlib.ConfigValidators;
 //TODO: Config transform to add section?
 namespace SNPPlib.Config
 {
-    public class ServerCollection : ConfigurationElementCollection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "ConfigurationElementCollection is the recommended base class for collections of ConfigurationElement objects.")]
+    internal class ServerCollection : ConfigurationElementCollection
     {
         internal const string _ElementName = "snpp";
 
         public ServerCollection()
         {
-            ServerConfigElement details = (ServerConfigElement)CreateNewElement();
-            if (!String.IsNullOrEmpty(details.Name))
-                Add(details);
+            //ServerConfigElement details = (ServerConfigElement)CreateNewElement();
+            //if (!String.IsNullOrEmpty(details.Name))
+            //    BaseAdd(details, false);
         }
 
         public override ConfigurationElementCollectionType CollectionType
@@ -71,6 +72,9 @@ namespace SNPPlib.Config
 
         public void Remove(ServerConfigElement details)
         {
+            if (details == null)
+                throw new ArgumentNullException("details");
+
             if (BaseIndexOf(details) >= 0)
                 BaseRemove(details.Name);
         }
@@ -101,7 +105,7 @@ namespace SNPPlib.Config
         }
     }
 
-    public class ServerConfigElement : ConfigurationElement
+    internal class ServerConfigElement : ConfigurationElement
     {
         private const string _Host = "host";
         private const string _LoginId = "loginId";
@@ -164,13 +168,13 @@ namespace SNPPlib.Config
             }
         }
 
-        [ConfigurationProperty(_Port, DefaultValue = (ushort)444)]
-        [UShortValidator(MinValue = 1, MaxValue = ushort.MaxValue)]
-        public ushort Port
+        [ConfigurationProperty(_Port, DefaultValue = 444)]
+        [IntegerValidator(MinValue = 1, MaxValue = (int)ushort.MaxValue)]
+        public int Port
         {
             get
             {
-                return (ushort)this[_Port];
+                return (int)this[_Port];
             }
             set
             {
@@ -179,7 +183,7 @@ namespace SNPPlib.Config
         }
     }
 
-    public class SnppSettingsSection : ConfigurationSection
+    internal class SnppSettingsSection : ConfigurationSection
     {
         public const string SectionName = "snppSettings";
 

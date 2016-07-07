@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Globalization;
 
 namespace SNPPlib.Config
 {
@@ -20,7 +21,7 @@ namespace SNPPlib.Config
             return GetConfig(name).Password;
         }
 
-        public static ushort GetPort(string name)
+        public static int GetPort(string name)
         {
             return GetConfig(name).Port;
         }
@@ -35,7 +36,7 @@ namespace SNPPlib.Config
             var empty = config.SnppServers.Count == 1 && String.IsNullOrEmpty(name) && String.IsNullOrEmpty(config.SnppServers[0].Name) ? config.SnppServers[0] : null;
             var server = name == null ? empty : config.SnppServers[name] ?? empty;
             if (server == null)
-                throw new ConfigurationErrorsException(String.Format(Resource.ConfigServerNotFound, name ?? String.Empty));
+                throw new ConfigurationErrorsException(String.Format(CultureInfo.CurrentCulture, Resource.ConfigServerNotFound, name ?? String.Empty));
 
             return server;
         }

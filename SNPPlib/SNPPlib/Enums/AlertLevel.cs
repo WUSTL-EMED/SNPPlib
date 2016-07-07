@@ -2,7 +2,7 @@
 
 namespace SNPPlib
 {
-    public enum AlertLevel : byte
+    public enum AlertLevel
     {
         DoNotAlert = 0,
         Alert = 1

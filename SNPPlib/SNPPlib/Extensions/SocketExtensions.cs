@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SNPPlib.Extensions
 {
-    public static class SocketExtensions
+    internal static class SocketExtensions
     {
         public static Task<Socket> AcceptTaskAsync(this Socket socket)
         {

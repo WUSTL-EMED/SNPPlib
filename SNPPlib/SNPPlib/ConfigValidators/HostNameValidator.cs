@@ -3,7 +3,7 @@ using System.Configuration;
 
 namespace SNPPlib.ConfigValidators
 {
-    public class HostnameValidator : ConfigurationValidatorBase
+    internal class HostnameValidator : ConfigurationValidatorBase
     {
         private static bool DefaultChecked = false;
 
@@ -35,12 +35,12 @@ namespace SNPPlib.ConfigValidators
 
             var val = (string)value;
             if (Uri.CheckHostName(val) == UriHostNameType.Unknown)
-                throw new ArgumentException(Resource.ConfigInvalidHostname, String.Empty);
+                throw new ArgumentException(Resource.ConfigInvalidHostName, String.Empty);
         }
     }
 
     [AttributeUsage(AttributeTargets.Property)]
-    public class HostnameValidatorAttribute : ConfigurationValidatorAttribute
+    internal sealed class HostnameValidatorAttribute : ConfigurationValidatorAttribute
     {
         public HostnameValidatorAttribute()
         {
