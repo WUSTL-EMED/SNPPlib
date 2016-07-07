@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config\SnppConfiguration.cs" />
     <Compile Include="Config\SnppConfig.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="PagerCollection.cs" />

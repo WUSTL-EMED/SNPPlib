@@ -47,6 +47,8 @@ namespace SNPPlib
 
         #endregion Constructors
 
+        #region Properties
+
         /// <summary>
         /// The IPAddress of the server.
         /// </summary>
@@ -83,6 +85,8 @@ namespace SNPPlib
         private Dictionary<string, Func<Guid, string, Task<string>>> Commands { get; set; }
 
         private Socket Socket { get; set; }
+
+        #endregion Properties
 
         #region Methods
 

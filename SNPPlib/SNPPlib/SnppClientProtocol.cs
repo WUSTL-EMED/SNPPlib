@@ -11,10 +11,10 @@ namespace SNPPlib
 {
     public class SnppClientProtocol : IDisposable
     {
-        internal static Regex CallerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);//is this numeric or alphanumeric?
-        internal static Regex LoginIdFormat = new Regex(@"^[a-z0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        internal static Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);//The spec says alphanumeric, what about punctuation?
-        internal static Regex PagerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);
+        public static Regex CallerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);//is this numeric or alphanumeric?
+        public static Regex LoginIdFormat = new Regex(@"^[a-z0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static Regex MessageFormat = new Regex(@"^[a-z0-9 ]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);//The spec says alphanumeric, what about punctuation?
+        public static Regex PagerIdFormat = new Regex(@"^[0-9]+$", RegexOptions.Compiled);
 
         #region Constructors
 
@@ -54,6 +54,8 @@ namespace SNPPlib
 
         #endregion Constructors
 
+        #region Properties
+
         /// <summary>
         /// The IPAddress of the server.
         /// </summary>
@@ -90,9 +92,11 @@ namespace SNPPlib
 
         private Socket Socket { get; set; }
 
+        #endregion Properties
+
         //option to re-try technical failures?
 
-        #region Async
+        #region Async Methods
 
         /// <summary>
         /// Send an alert level (ALER) command asynchronously.
@@ -365,9 +369,9 @@ namespace SNPPlib
             return response;
         }
 
-        #endregion Async
+        #endregion Async Methods
 
-        #region Sync
+        #region Sync Methods
 
         /// <summary>
         /// Send an alert level (ALER) command.
@@ -640,7 +644,7 @@ namespace SNPPlib
             return response;
         }
 
-        #endregion Sync
+        #endregion Sync Methods
 
         #region IDisposable
 

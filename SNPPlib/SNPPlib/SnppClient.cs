@@ -53,6 +53,8 @@ namespace SNPPlib
 
         #endregion Constructors
 
+        #region Properties
+
         /// <summary>
         /// The IPAddress of the server.
         /// </summary>
@@ -89,13 +91,21 @@ namespace SNPPlib
             //settable?
         }
 
+        /// <summary>
+        /// The login id of the server.
+        /// </summary>
         public string LoginId { get; set; }
 
+        /// <summary>
+        /// The password of the server.
+        /// </summary>
         public string Password { private get; set; }
 
         private SnppClientProtocol Client { get; set; }
 
-        #region Async
+        #endregion Properties
+
+        #region Async Methods
 
         /// <summary>
         /// Send a SnppMessage asynchronously.
@@ -199,9 +209,9 @@ namespace SNPPlib
             }
         }
 
-        #endregion Async
+        #endregion Async Methods
 
-        #region Sync
+        #region Sync Methods
 
         /// <summary>
         /// Send a SnppMessage.
@@ -305,7 +315,7 @@ namespace SNPPlib
             }
         }
 
-        #endregion Sync
+        #endregion Sync Methods
 
         #region IDisposable
 

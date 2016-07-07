@@ -7,6 +7,8 @@ namespace SNPPlib
     //E.g. If level one, replace newlines with space since DATA is required for multi-line?
     public class SnppMessage
     {
+        #region Properties
+
         public string Message { get; set; }
 
         public PagerCollection Pagers { get; private set; }
@@ -25,6 +27,8 @@ namespace SNPPlib
                 return Message.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             }
         }
+
+        #endregion Properties
 
         #region Constructors
 
