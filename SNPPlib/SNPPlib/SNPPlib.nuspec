@@ -5,7 +5,7 @@
     <version>$version$</version>
     <title>$id$</title>
     <authors>Aaron Papp</authors>
-    <owners>$author$</owners>
+    <owners>Aaron Papp</owners>
     <licenseUrl>https://github.com/PCFDev/SNPPlib/blob/master/LICENSE.md</licenseUrl>
     <projectUrl>https://github.com/PCFDev/SNPPlib</projectUrl>
     <iconUrl>https://avatars0.githubusercontent.com/u/10945804?s=128</iconUrl>
@@ -15,15 +15,9 @@
     <language>en-US</language>
     <tags>snpp</tags>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="Microsoft.CSharp" />
       <frameworkAssembly assemblyName="System" />
       <frameworkAssembly assemblyName="System.configuration" />
       <frameworkAssembly assemblyName="System.Core" />
-      <frameworkAssembly assemblyName="System.Data" />
-      <frameworkAssembly assemblyName="System.Data.DataSetExtensions" />
-      <frameworkAssembly assemblyName="System.Net.Http" />
-      <frameworkAssembly assemblyName="System.Xml" />
-      <frameworkAssembly assemblyName="System.Xml.Linq" />
     </frameworkAssemblies>
   </metadata>
 </package>
