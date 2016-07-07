@@ -244,11 +244,13 @@ namespace SNPPlib
         public async Task<SnppResponse> LoginAsync(string loginId, string password = null)
         {
             if (loginId == null)
-                throw new ArgumentNullException("loginId");//alphanumeric or just numeric?
+                throw new ArgumentNullException("loginId");
             if (String.IsNullOrWhiteSpace(loginId))
-                throw new ArgumentException(Resource.LoginIdRequired, "loginId");//alphanumeric or just numeric?
+                throw new ArgumentException(Resource.LoginIdRequired, "loginId");
             if (!LoginIdFormat.IsMatch(loginId))
                 throw new ArgumentException(Resource.LoginIdAlphanumeric, "loginId");
+
+            //TODO: Is there a specific allow format for passwords? e.g. alpha-numeric.
 
             return await SendAsync(String.Format("LOGI {0} {1}", loginId, password ?? String.Empty).TrimEnd());
         }

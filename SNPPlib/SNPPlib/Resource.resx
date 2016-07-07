@@ -123,8 +123,20 @@
   <data name="CallerIdRequired" xml:space="preserve">
     <value>A caller id is required.</value>
   </data>
+  <data name="ConfigInvalidHostname" xml:space="preserve">
+    <value>Configured hostname is invalid.</value>
+  </data>
+  <data name="ConfigInvalidType" xml:space="preserve">
+    <value>Configured value is not valid for this type.</value>
+  </data>
   <data name="ConfigNotFound" xml:space="preserve">
     <value>The SNPP configuration section was not found.</value>
+  </data>
+  <data name="ConfigNotOutsideRange" xml:space="preserve">
+    <value>Configured value is not outside specified range.</value>
+  </data>
+  <data name="ConfigOutsideRange" xml:space="preserve">
+    <value>Configured value is outside specified range.</value>
   </data>
   <data name="ConfigServerNotFound" xml:space="preserve">
     <value>The configuration for the SNPPP server '{0}' was not found.</value>

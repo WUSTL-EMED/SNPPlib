@@ -45,8 +45,10 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigValidators\UShortValidator.cs" />
     <Compile Include="Config\SnppConfiguration.cs" />
     <Compile Include="Config\SnppConfig.cs" />
+    <Compile Include="ConfigValidators\HostnameValidator.cs" />
     <Compile Include="Enums\AlertLevel.cs" />
     <Compile Include="Enums\ServiceLevel.cs" />
     <Compile Include="PagerCollection.cs" />

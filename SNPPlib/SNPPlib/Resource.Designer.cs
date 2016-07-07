@@ -79,11 +79,47 @@ namespace SNPPlib {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Configured hostname is invalid..
+        /// </summary>
+        internal static string ConfigInvalidHostname {
+            get {
+                return ResourceManager.GetString("ConfigInvalidHostname", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured value is not valid for this type..
+        /// </summary>
+        internal static string ConfigInvalidType {
+            get {
+                return ResourceManager.GetString("ConfigInvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The SNPP configuration section was not found..
         /// </summary>
         internal static string ConfigNotFound {
             get {
                 return ResourceManager.GetString("ConfigNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured value is not outside specified range..
+        /// </summary>
+        internal static string ConfigNotOutsideRange {
+            get {
+                return ResourceManager.GetString("ConfigNotOutsideRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured value is outside specified range..
+        /// </summary>
+        internal static string ConfigOutsideRange {
+            get {
+                return ResourceManager.GetString("ConfigOutsideRange", resourceCulture);
             }
         }
         

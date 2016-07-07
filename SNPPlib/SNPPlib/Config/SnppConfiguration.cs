@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using SNPPlib.ConfigValidators;
 
 //TODO: Config transform to add section?
 namespace SNPPlib.Config
@@ -109,6 +110,7 @@ namespace SNPPlib.Config
         private const string _Port = "port";
 
         [ConfigurationProperty(_Host, IsRequired = true)]
+        [HostnameValidator(IgnoreDefaultValue = true)]
         public string Host
         {
             get
@@ -124,6 +126,7 @@ namespace SNPPlib.Config
         [ConfigurationProperty(_LoginId)]
         public string LoginId
         {
+            //TODO: Validate?
             get
             {
                 return (string)this[_LoginId];
@@ -150,6 +153,7 @@ namespace SNPPlib.Config
         [ConfigurationProperty(_Password)]
         public string Password
         {
+            //TODO: Validate?
             get
             {
                 return (string)this[_Password];
@@ -161,6 +165,7 @@ namespace SNPPlib.Config
         }
 
         [ConfigurationProperty(_Port, DefaultValue = (ushort)444)]
+        [UShortValidator(MinValue = 1, MaxValue = ushort.MaxValue)]
         public ushort Port
         {
             get
