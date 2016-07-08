@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Net;
 using SNPPlib.ConfigValidators;
 
 //TODO: Config transform to add section?
@@ -169,7 +170,7 @@ namespace SNPPlib.Config
         }
 
         [ConfigurationProperty(_Port, DefaultValue = 444)]
-        [IntegerValidator(MinValue = 1, MaxValue = (int)ushort.MaxValue)]
+        [IntegerValidator(MinValue = IPEndPoint.MinPort, MaxValue = IPEndPoint.MaxPort)]
         public int Port
         {
             get

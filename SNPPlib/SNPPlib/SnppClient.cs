@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using SNPPlib.Config;
 using SNPPlib.Extensions;
@@ -12,18 +11,6 @@ namespace SNPPlib
     public class SnppClient : IDisposable
     {
         #region Constructors
-
-        /// <summary>
-        /// Create a SnppClient object pointing to a given IPAddress and port.
-        /// </summary>
-        /// <param name="address">The IPAddress of the server.</param>
-        /// <param name="port">The port of the server.</param>
-        /// <param name="loginId">The login id of the server.</param>
-        /// <param name="password">The password of the server.</param>
-        public SnppClient(IPAddress address, int port)
-        {
-            Client = new SnppClientProtocol(address, port);
-        }
 
         /// <summary>
         /// Create a SnppClient object pointing to a given host name and port.
@@ -42,7 +29,7 @@ namespace SNPPlib
         /// </summary>
         /// <param name="name">The name of the configured server.</param>
         public SnppClient(string name)
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
+            : this(SnppConfig.GetHost(name), SnppConfig.GetPort(name))
         {
             Client = new SnppClientProtocol(name);
             LoginId = SnppConfig.GetLoginId(name);
@@ -53,7 +40,7 @@ namespace SNPPlib
         /// Create a SnppClientProtocol object pointing to a single unnamed configured server.
         /// </summary>
         public SnppClient()
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(null)).AddressList[0], SnppConfig.GetPort(null))
+            : this(SnppConfig.GetHost(null), SnppConfig.GetPort(null))
         {
             Client = new SnppClientProtocol(null);
             LoginId = SnppConfig.GetLoginId(null);
@@ -63,18 +50,6 @@ namespace SNPPlib
         #endregion Constructors
 
         #region Properties
-
-        /// <summary>
-        /// The IPAddress of the server.
-        /// </summary>
-        public IPAddress Address
-        {
-            get
-            {
-                return Client.Address;
-            }
-            //settable?
-        }
 
         /// <summary>
         /// The host name of the server.
@@ -109,6 +84,30 @@ namespace SNPPlib
                 return Client.Port;
             }
             //settable?
+        }
+
+        public int RecieveTimeout
+        {
+            get
+            {
+                return Client.RecieveTimeout;
+            }
+            set
+            {
+                Client.RecieveTimeout = value;
+            }
+        }
+
+        public int SendTimeout
+        {
+            get
+            {
+                return Client.SendTimeout;
+            }
+            set
+            {
+                Client.SendTimeout = value;
+            }
         }
 
         private SnppClientProtocol Client { get; set; }

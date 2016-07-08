@@ -13,9 +13,9 @@ namespace SNPPlib.Extensions
             return Task.Factory.FromAsync<Socket>(socket.BeginAccept, socket.EndAccept, socket);
         }
 
-        public static Task ConnectTaskAsync(this Socket socket, EndPoint endpoint)
+        public static Task ConnectTaskAsync(this Socket socket, string host, int port)
         {
-            return Task.Factory.FromAsync(socket.BeginConnect, socket.EndConnect, endpoint, null);
+            return Task.Factory.FromAsync(socket.BeginConnect(host, port, null, socket), socket.EndConnect);
         }
 
         public static Task DisconnectTaskAsync(this Socket socket, bool reuseSocket)

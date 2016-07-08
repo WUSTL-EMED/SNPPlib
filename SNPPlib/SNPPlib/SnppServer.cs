@@ -14,26 +14,13 @@ namespace SNPPlib
         #region Constructors
 
         /// <summary>
-        /// Create a SnppServer object pointing to a given IPAddress and port.
+        /// Create a SnppServer object pointing to a given port.
         /// </summary>
-        /// <param name="address">The IPAddress of the server.</param>
         /// <param name="port">The port of the server.</param>
-        public SnppServer(IPAddress address, int port)
+        public SnppServer(int port)
         {
-            Address = address;
             Port = port;
             Commands = new Dictionary<string, Func<Guid, string, Task<string>>>();
-        }
-
-        /// <summary>
-        /// Create a SnppServer object pointing to a given host name and port.
-        /// </summary>
-        /// <param name="host">The host name of the server.</param>
-        /// <param name="port">The port of the server.</param>
-        public SnppServer(string host, int port)
-            : this(Dns.GetHostEntry(host).AddressList[0], port)
-        {
-            _Host = host;
         }
 
         /// <summary>
@@ -41,18 +28,16 @@ namespace SNPPlib
         /// </summary>
         /// <param name="name">The name of the configured server.</param>
         public SnppServer(string name)
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
+            : this(SnppConfig.GetPort(name))
         {
-            _Host = SnppConfig.GetHost(name);
         }
 
         /// <summary>
         /// Create a SnppServer object pointing to a single unnamed configured server.
         /// </summary>
         public SnppServer()
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(null)).AddressList[0], SnppConfig.GetPort(null))
+            : this(SnppConfig.GetPort(null))
         {
-            _Host = SnppConfig.GetHost(null);
         }
 
         #endregion Constructors
@@ -60,24 +45,12 @@ namespace SNPPlib
         #region Properties
 
         /// <summary>
-        /// The IPAddress of the server.
-        /// </summary>
-        public IPAddress Address
-        {
-            get;
-            private set;
-            //settable until listening?
-        }
-
-        /// <summary>
         /// The host name of the server.
         /// </summary>
         public string Host
         {
-            get
-            {
-                return _Host ?? Address.ToString();
-            }
+            get;
+            private set;
             //settable until listening?
         }
 
@@ -91,7 +64,37 @@ namespace SNPPlib
             //settable until listening?
         }
 
-        private string _Host { get; set; }
+        public int RecieveTimeout
+        {
+            get
+            {
+                return _RecieveTimeout;
+            }
+            set
+            {
+                if (Socket != null)
+                    Socket.ReceiveTimeout = value;
+                _RecieveTimeout = value;
+            }
+        }
+
+        public int SendTimeout
+        {
+            get
+            {
+                return _SendTimeout;
+            }
+            set
+            {
+                if (Socket != null)
+                    Socket.SendTimeout = value;
+                _SendTimeout = value;
+            }
+        }
+
+        private int _RecieveTimeout { get; set; }
+
+        private int _SendTimeout { get; set; }
 
         private Dictionary<string, Func<Guid, string, Task<string>>> Commands { get; set; }
 
@@ -118,9 +121,8 @@ namespace SNPPlib
             //TODO: Only allow single call?
             //Allow specifying port here and listen on more than one port?
 
-            var local = new IPEndPoint(Address, Port);
             if (Socket == null)//The socket _should_ be reusable.
-                Socket = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
@@ -129,7 +131,9 @@ namespace SNPPlib
 
             try
             {
-                Socket.Bind(local);
+                //Multiple local IP?
+                //Socket.Bind(new IPEndPoint(Dns.GetHostAddresses(Host)[0], Port));
+                Socket.Bind(new IPEndPoint(IPAddress.Any, Port));
                 Socket.Listen(backlog);
 
                 Task.Factory.StartNew(async () =>
@@ -155,6 +159,13 @@ namespace SNPPlib
                                         tokenSource.Token.ThrowIfCancellationRequested();
 
                                         var request = (await remote.ReceiveTaskAsync(1024)).Split(new char[] { ' ', '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                                        if (request.Length == 0)
+                                        {
+                                            SocketError error;
+                                            remote.Send(new byte[1], 0, 1, SocketFlags.None, out error);
+                                            continue;
+                                        }
+
                                         var command = request.Length > 0 ? request[0] : default(string);
                                         var argument = request.Length > 1 ? request[1] : default(string);
 
@@ -220,6 +231,9 @@ namespace SNPPlib
                                 finally
                                 {
                                     //cleanup
+                                    remote.Shutdown(SocketShutdown.Both);
+                                    remote.Disconnect(false);
+                                    remote.Dispose();
                                 }
                             }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
                         }
@@ -230,6 +244,8 @@ namespace SNPPlib
                     finally
                     {
                         //cleanup
+                        Socket.Shutdown(SocketShutdown.Both);
+                        Socket.Disconnect(true);
                     }
                 }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
             }

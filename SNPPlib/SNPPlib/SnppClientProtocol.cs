@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -21,26 +20,14 @@ namespace SNPPlib
         #region Constructors
 
         /// <summary>
-        /// Create a SnppClientProtocol object pointing to a given IPAddress and port.
-        /// </summary>
-        /// <param name="address">The IPAddress of the server.</param>
-        /// <param name="port">The port of the server.</param>
-        public SnppClientProtocol(IPAddress address, int port)
-        {
-            Address = address;
-            Port = port;
-        }
-
-        /// <summary>
         /// Create a SnppClientProtocol object pointing to a given host name and port.
         /// </summary>
         /// <param name="host">The host name of the server.</param>
         /// <param name="port">The port of the server.</param>
         public SnppClientProtocol(string host, int port)
-            : this(Dns.GetHostEntry(host).AddressList[0], port)
         {
-            //What if there is more than one ip?
-            _Host = host;
+            Host = host;
+            Port = port;
         }
 
         /// <summary>
@@ -48,18 +35,16 @@ namespace SNPPlib
         /// </summary>
         /// <param name="name">The name of the configured server.</param>
         public SnppClientProtocol(string name)
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(name)).AddressList[0], SnppConfig.GetPort(name))
+            : this(SnppConfig.GetHost(name), SnppConfig.GetPort(name))
         {
-            _Host = SnppConfig.GetHost(name);
         }
 
         /// <summary>
         /// Create a SnppClientProtocol object pointing to a single unnamed configured server.
         /// </summary>
         public SnppClientProtocol()
-            : this(Dns.GetHostEntry(SnppConfig.GetHost(null)).AddressList[0], SnppConfig.GetPort(null))
+            : this(SnppConfig.GetHost(null), SnppConfig.GetPort(null))
         {
-            _Host = SnppConfig.GetHost(null);
         }
 
         #endregion Constructors
@@ -67,24 +52,12 @@ namespace SNPPlib
         #region Properties
 
         /// <summary>
-        /// The IPAddress of the server.
-        /// </summary>
-        public IPAddress Address
-        {
-            get;
-            private set;
-            //settable?
-        }
-
-        /// <summary>
         /// The host name of the server.
         /// </summary>
         public string Host
         {
-            get
-            {
-                return _Host ?? Address.ToString();
-            }
+            get;
+            private set;
             //settable?
         }
 
@@ -98,7 +71,37 @@ namespace SNPPlib
             //settable?
         }
 
-        private string _Host { get; set; }
+        public int RecieveTimeout
+        {
+            get
+            {
+                return _RecieveTimeout;
+            }
+            set
+            {
+                if (Socket != null)
+                    Socket.ReceiveTimeout = value;
+                _RecieveTimeout = value;
+            }
+        }
+
+        public int SendTimeout
+        {
+            get
+            {
+                return _SendTimeout;
+            }
+            set
+            {
+                if (Socket != null)
+                    Socket.SendTimeout = value;
+                _SendTimeout = value;
+            }
+        }
+
+        private int _RecieveTimeout { get; set; }
+
+        private int _SendTimeout { get; set; }
 
         private Socket Socket { get; set; }
 
@@ -143,13 +146,12 @@ namespace SNPPlib
         /// <returns>True if the connection was established, otherwise false.</returns>
         public async Task<bool> ConnectAsync()
         {
-            var remote = new IPEndPoint(Address, Port);
             if (Socket == null)//The socket _should_ be reusable.
-                Socket = new Socket(remote.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            await Socket.ConnectTaskAsync(remote);
+            await Socket.ConnectTaskAsync(Host, Port);
 
             var response = new SnppResponse(await Socket.ReceiveTaskAsync(256));//TODO: Response parser
             if (response.Code == ResponseCode.GatewayReady)
@@ -407,7 +409,7 @@ namespace SNPPlib
             //return await SendAsync("2WAY");
         }
 
-        private async Task<SnppResponse> SendAsync(string command, int responseSize = 1024)
+        private async Task<SnppResponse> SendAsync(string command, int responseSize = 8192)
         {
             //TODO: check for crlf in command?
             await Socket.SendTaskAsync(command + "\r\n");
@@ -458,13 +460,12 @@ namespace SNPPlib
         /// <returns>True if the connection was established, otherwise false.</returns>
         public bool Connect()
         {
-            var remote = new IPEndPoint(Address, Port);
             if (Socket == null)//The socket _should_ be reusable.
-                Socket = new Socket(remote.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            Socket.Connect(remote);
+            Socket.Connect(Host, Port);
 
             var response = new SnppResponse(Socket.Receive(256));//TODO: Response parser
             if (response.Code == ResponseCode.GatewayReady)
@@ -720,7 +721,7 @@ namespace SNPPlib
             //return Send("2WAY");
         }
 
-        private SnppResponse Send(string command, int responseSize = 1024)
+        private SnppResponse Send(string command, int responseSize = 8192)
         {
             //TODO: check for crlf in command?
             Socket.Send(command + "\r\n");
