@@ -146,11 +146,11 @@ namespace SNPPlib
         /// <returns>True if the connection was established, otherwise false.</returns>
         public async Task<bool> ConnectAsync()
         {
-            if (Socket == null)//The socket _should_ be reusable.
+            if (Socket == null)
+            {
                 Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
+            }
             await Socket.ConnectTaskAsync(Host, Port);
 
             var response = new SnppResponse(await Socket.ReceiveTaskAsync(256));//TODO: Response parser
@@ -455,11 +455,11 @@ namespace SNPPlib
         /// <returns>True if the connection was established, otherwise false.</returns>
         public bool Connect()
         {
-            if (Socket == null)//The socket _should_ be reusable.
+            if (Socket == null)
+            {
                 Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
+            }
             Socket.Connect(Host, Port);
 
             var response = new SnppResponse(Socket.Receive(256));//TODO: Response parser
@@ -731,7 +731,7 @@ namespace SNPPlib
         {
             //Can this be moved to a helper? I don't think you can set a value to null with a helper.
             if (shutdown)
-                Socket.Shutdown(SocketShutdown.Both);
+                Socket.Shutdown(SocketShutdown.Both);//Not sure this is the correct value.
             Socket.Close();
             Socket = null;
         }

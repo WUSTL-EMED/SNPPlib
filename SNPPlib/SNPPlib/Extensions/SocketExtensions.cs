@@ -35,7 +35,7 @@ namespace SNPPlib.Extensions
             return Task.Factory.FromAsync<int>(socket.BeginReceive(buffer, offset, size, flags, null, socket), socket.EndReceive);
         }
 
-        public static async Task<string> ReceiveTaskAsync(this Socket socket, int size, Encoding encoding = null, SocketFlags flags = SocketFlags.None)//buffer size?
+        public static async Task<string> ReceiveTaskAsync(this Socket socket, int size = 8192, Encoding encoding = null, SocketFlags flags = SocketFlags.None)//buffer size?
         {
             var buffer = new byte[size];
             await socket.ReceiveTaskAsync(buffer, 0, size, flags);

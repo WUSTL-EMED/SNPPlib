@@ -44,15 +44,24 @@ namespace SNPPlib
 
         #region Properties
 
+        public IPProtectionLevel IPProtectionLevel
+        {
+            get
+            {
+                return _IPProtectionLevel;
+            }
+            set
+            {
+                if (Socket != null)
+                    Socket.SetIPProtectionLevel(value);
+                _IPProtectionLevel = value;
+            }
+        }
+
         /// <summary>
         /// The port of the server.
         /// </summary>
-        public int Port
-        {
-            get;
-            private set;
-            //settable until listening?
-        }
+        public int Port { get; private set; }
 
         public int ReceiveTimeout
         {
@@ -81,6 +90,8 @@ namespace SNPPlib
                 _SendTimeout = value;
             }
         }
+
+        private IPProtectionLevel _IPProtectionLevel { get; set; }
 
         private int _ReceiveTimeout { get; set; }
 
@@ -111,11 +122,14 @@ namespace SNPPlib
             //TODO: Only allow single call?
             //Allow specifying port here and listen on more than one port?
 
-            if (Socket == null)//The socket _should_ be reusable.
+            if (Socket == null)
+            {
                 Socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);//Not sure we need this.
+                Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.AcceptConnection, true);
+                Socket.DualMode = true;
+            }
 
             var tokenSource = new CancellationTokenSource();
 
@@ -148,7 +162,7 @@ namespace SNPPlib
                                     {
                                         tokenSource.Token.ThrowIfCancellationRequested();
 
-                                        var request = (await remote.ReceiveTaskAsync(1024)).Split(new char[] { ' ', '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                                        var request = (await remote.ReceiveTaskAsync()).Split(new char[] { ' ', '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries);
                                         if (request.Length == 0)
                                         {
                                             SocketError error;
@@ -191,7 +205,7 @@ namespace SNPPlib
 
                                                 do
                                                 {
-                                                    argument += await remote.ReceiveTaskAsync(1024);
+                                                    argument += await remote.ReceiveTaskAsync();
                                                 }
                                                 while (!argument.EndsWith("\r\n.\r\n"));
                                                 argument = argument.Substring(0, argument.LastIndexOf("\r\n.\r\n")).TrimStart(new char[] { '\r', '\n' });
@@ -220,7 +234,7 @@ namespace SNPPlib
                                 finally
                                 {
                                     //cleanup
-                                    remote.Shutdown(SocketShutdown.Both);
+                                    remote.Shutdown(SocketShutdown.Send);//Causes putty to error out, not sure if this is right.
                                     remote.Close();
                                 }
                             }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
