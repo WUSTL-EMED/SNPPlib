@@ -71,17 +71,17 @@ namespace SNPPlib
             //settable?
         }
 
-        public int RecieveTimeout
+        public int ReceiveTimeout
         {
             get
             {
-                return _RecieveTimeout;
+                return _ReceiveTimeout;
             }
             set
             {
                 if (Socket != null)
                     Socket.ReceiveTimeout = value;
-                _RecieveTimeout = value;
+                _ReceiveTimeout = value;
             }
         }
 
@@ -99,7 +99,7 @@ namespace SNPPlib
             }
         }
 
-        private int _RecieveTimeout { get; set; }
+        private int _ReceiveTimeout { get; set; }
 
         private int _SendTimeout { get; set; }
 
@@ -156,7 +156,7 @@ namespace SNPPlib
             var response = new SnppResponse(await Socket.ReceiveTaskAsync(256));//TODO: Response parser
             if (response.Code == ResponseCode.GatewayReady)
                 return true;
-            await Socket.DisconnectTaskAsync(true);
+            Close(false);
             return false;
         }
 
@@ -198,14 +198,6 @@ namespace SNPPlib
                 response = await SendAsync("\r\n.");
             }
             return response;
-        }
-
-        /// <summary>
-        /// Disconnect the socket asynchronously.
-        /// </summary>
-        public async Task DisconnectAsync()//Send a quit?
-        {
-            await Socket.DisconnectTaskAsync(true);
         }
 
         /// <summary>
@@ -354,7 +346,7 @@ namespace SNPPlib
             if (Socket.Connected)//reliable?
                 await SendAsync("QUIT");
             //Does it matter whether or not they respond as expected? We should probably just disconnect anyway.
-            await Socket.DisconnectTaskAsync(true);
+            Close(true);
         }
 
         /// <summary>
@@ -417,7 +409,10 @@ namespace SNPPlib
             //handling multi-part responses? ResponseCode.MultiLineResponse; handling long responses?
             var response = new SnppResponse(await Socket.ReceiveTaskAsync(responseSize));
             if (response.Code == ResponseCode.FatalError)
-                await Socket.DisconnectTaskAsync(true);//Do we want to do anything to the response/throw?
+            {
+                Close(true);
+                //Do we want to do anything to the response/throw?
+            }
             return response;
         }
 
@@ -470,7 +465,7 @@ namespace SNPPlib
             var response = new SnppResponse(Socket.Receive(256));//TODO: Response parser
             if (response.Code == ResponseCode.GatewayReady)
                 return true;
-            Socket.Disconnect(true);
+            Close(false);
             return false;
         }
 
@@ -512,14 +507,6 @@ namespace SNPPlib
                 response = Send("\r\n.");
             }
             return response;
-        }
-
-        /// <summary>
-        /// Disconnect the socket.
-        /// </summary>
-        public void Disconnect()//Send a quit?
-        {
-            Socket.Disconnect(true);
         }
 
         /// <summary>
@@ -666,7 +653,7 @@ namespace SNPPlib
             if (Socket.Connected)//reliable?
                 Send("QUIT");
             //Does it matter whether or not they respond as expected? We should probably just disconnect anyway.
-            Socket.Disconnect(true);
+            Close(true);
         }
 
         /// <summary>
@@ -729,11 +716,27 @@ namespace SNPPlib
             //handling multi-part responses? ResponseCode.MultiLineResponse; handling long responses?
             var response = new SnppResponse(Socket.Receive(responseSize));
             if (response.Code == ResponseCode.FatalError)
-                Socket.Disconnect(true);//Do we want to do anything to the response/throw?
+            {
+                Close(true);
+                //Do we want to do anything to the response/throw?
+            }
             return response;
         }
 
         #endregion Sync Methods
+
+        #region Private Methods
+
+        private void Close(bool shutdown)
+        {
+            //Can this be moved to a helper? I don't think you can set a value to null with a helper.
+            if (shutdown)
+                Socket.Shutdown(SocketShutdown.Both);
+            Socket.Close();
+            Socket = null;
+        }
+
+        #endregion Private Methods
 
         #region IDisposable
 

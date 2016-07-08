@@ -45,16 +45,6 @@ namespace SNPPlib
         #region Properties
 
         /// <summary>
-        /// The host name of the server.
-        /// </summary>
-        public string Host
-        {
-            get;
-            private set;
-            //settable until listening?
-        }
-
-        /// <summary>
         /// The port of the server.
         /// </summary>
         public int Port
@@ -64,17 +54,17 @@ namespace SNPPlib
             //settable until listening?
         }
 
-        public int RecieveTimeout
+        public int ReceiveTimeout
         {
             get
             {
-                return _RecieveTimeout;
+                return _ReceiveTimeout;
             }
             set
             {
                 if (Socket != null)
                     Socket.ReceiveTimeout = value;
-                _RecieveTimeout = value;
+                _ReceiveTimeout = value;
             }
         }
 
@@ -92,7 +82,7 @@ namespace SNPPlib
             }
         }
 
-        private int _RecieveTimeout { get; set; }
+        private int _ReceiveTimeout { get; set; }
 
         private int _SendTimeout { get; set; }
 
@@ -189,7 +179,6 @@ namespace SNPPlib
                                             }
 
                                             await remote.SendTaskAsync("221 OK, Goodbye\r\n");
-                                            await remote.DisconnectTaskAsync(true);
                                             break;
                                         }
                                         else if (funcExists)
@@ -232,8 +221,7 @@ namespace SNPPlib
                                 {
                                     //cleanup
                                     remote.Shutdown(SocketShutdown.Both);
-                                    remote.Disconnect(false);
-                                    remote.Dispose();
+                                    remote.Close();
                                 }
                             }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
                         }
@@ -245,11 +233,12 @@ namespace SNPPlib
                     {
                         //cleanup
                         Socket.Shutdown(SocketShutdown.Both);
-                        Socket.Disconnect(true);
+                        Socket.Close();
+                        Socket = null;
                     }
                 }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
             }
-            catch (Exception e)
+            catch (Exception e)//TODO: More specific exceptions
             {
                 Console.WriteLine(e.ToString());
                 return null;

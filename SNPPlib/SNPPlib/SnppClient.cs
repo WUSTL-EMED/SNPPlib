@@ -86,15 +86,15 @@ namespace SNPPlib
             //settable?
         }
 
-        public int RecieveTimeout
+        public int ReceiveTimeout
         {
             get
             {
-                return Client.RecieveTimeout;
+                return Client.ReceiveTimeout;
             }
             set
             {
-                Client.RecieveTimeout = value;
+                Client.ReceiveTimeout = value;
             }
         }
 
