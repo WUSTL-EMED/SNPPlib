@@ -20,7 +20,7 @@ namespace SNPPlib
         public SnppServer(int port)
         {
             Port = port;
-            Commands = new Dictionary<string, Func<Guid, string, Task<string>>>();
+            Commands = new Dictionary<string, Func<Guid, CancellationTokenSource, string, Task<string>>>();
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace SNPPlib
 
         private int _SendTimeout { get; set; }
 
-        private Dictionary<string, Func<Guid, string, Task<string>>> Commands { get; set; }
+        private Dictionary<string, Func<Guid, CancellationTokenSource, string, Task<string>>> Commands { get; set; }
 
         private Socket Socket { get; set; }
 
@@ -106,10 +106,10 @@ namespace SNPPlib
         #region Methods
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
-        public void AddCommand(string command, Func<Guid, string, Task<string>> handler)
+        public void AddCommand(string command, Func<Guid, CancellationTokenSource, string, Task<string>> handler)
         {
             //TODO: Better way of handling the registering of functions?
-            Commands.Add(command, handler);
+            Commands.Add(command.ToUpperInvariant(), handler);
         }
 
         public async Task<CancellationTokenSource> Listen()
@@ -131,7 +131,7 @@ namespace SNPPlib
                 Socket.DualMode = true;
             }
 
-            var tokenSource = new CancellationTokenSource();
+            var listenerToken = new CancellationTokenSource();
 
             try
             {
@@ -146,7 +146,7 @@ namespace SNPPlib
                     {
                         while (true)
                         {
-                            tokenSource.Token.ThrowIfCancellationRequested();
+                            listenerToken.Token.ThrowIfCancellationRequested();
 
                             var remote = await Socket.AcceptTaskAsync();
                             await remote.SendTaskAsync("220 SNPP (V3) Gateway Ready\r\n");
@@ -156,11 +156,12 @@ namespace SNPPlib
                             Task.Factory.StartNew(async () =>
                             {
                                 var remoteId = Guid.NewGuid();
+                                var remoteToken = CancellationTokenSource.CreateLinkedTokenSource(listenerToken.Token);
                                 try
                                 {
                                     while (true)
                                     {
-                                        tokenSource.Token.ThrowIfCancellationRequested();
+                                        remoteToken.Token.ThrowIfCancellationRequested();
 
                                         var request = (await remote.ReceiveTaskAsync()).Split(new char[] { ' ', '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries);
                                         if (request.Length == 0)
@@ -170,14 +171,14 @@ namespace SNPPlib
                                             continue;
                                         }
 
-                                        var command = request.Length > 0 ? request[0] : default(string);
+                                        var command = request.Length > 0 ? request[0].ToUpperInvariant() : default(string);
                                         var argument = request.Length > 1 ? request[1] : default(string);
 
                                         //Getting double requests, what is the junk?
                                         if (String.IsNullOrWhiteSpace(command))
                                             continue;
 
-                                        Func<Guid, string, Task<string>> func;
+                                        Func<Guid, CancellationTokenSource, string, Task<string>> func;
                                         var funcExists = Commands.TryGetValue(command, out func) && func != null;
 
                                         if (command == "QUIT")
@@ -187,7 +188,7 @@ namespace SNPPlib
                                             {
                                                 try
                                                 {
-                                                    await func(remoteId, argument);//timeout?
+                                                    await func(remoteId, remoteToken, argument);//timeout?
                                                 }
                                                 catch (Exception) { }
                                             }
@@ -214,7 +215,7 @@ namespace SNPPlib
                                             var response = "554 Error, failed (technical reason)\r\n";
                                             try
                                             {
-                                                response = await func(remoteId, argument);//timeout?
+                                                response = await func(remoteId, remoteToken, argument);//timeout?
                                                 if (!response.EndsWith("\r\n"))
                                                     response += "\r\n";
                                             }
@@ -237,7 +238,7 @@ namespace SNPPlib
                                     remote.Shutdown(SocketShutdown.Send);//Causes putty to error out, not sure if this is right.
                                     remote.Close();
                                 }
-                            }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
+                            }, listenerToken.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
                         }
                     }
                     catch (OperationCanceledException)
@@ -250,7 +251,7 @@ namespace SNPPlib
                         Socket.Close();
                         Socket = null;
                     }
-                }, tokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
+                }, listenerToken.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning, TaskScheduler.Default).Forget();
             }
             catch (Exception e)//TODO: More specific exceptions
             {
@@ -258,7 +259,7 @@ namespace SNPPlib
                 return null;
             }
 
-            return await Task.FromResult(tokenSource);
+            return await Task.FromResult(listenerToken);
         }
 
         #endregion Methods

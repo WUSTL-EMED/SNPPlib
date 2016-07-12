@@ -16,12 +16,12 @@ namespace SNPPHost
             using (var server = new SnppServer())
             {
                 //Not a standard command.
-                server.AddCommand("TEST", async (id, arg) =>
+                server.AddCommand("TEST", async (id, token, arg) =>
                 {
                     return await Task.FromResult("This is a test command.");
                 });
 
-                server.AddCommand("DATA", async (id, arg) =>
+                server.AddCommand("DATA", async (id, token, arg) =>
                 {
                     return await Task.FromResult("This is a test command.");
                 });
