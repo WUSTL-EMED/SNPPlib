@@ -108,6 +108,11 @@ namespace SNPPlib
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
         public void AddCommand(string command, Func<Guid, CancellationTokenSource, string, Task<string>> handler)
         {
+            if (command == null)
+                throw new ArgumentNullException("command");
+            if (handler == null)
+                throw new ArgumentNullException("handler");
+
             //TODO: Better way of handling the registering of functions?
             Commands.Add(command.ToUpperInvariant(), handler);
         }
