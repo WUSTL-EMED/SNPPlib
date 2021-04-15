@@ -149,6 +149,13 @@ namespace SNPPlib
                         return resp;
                 }
 
+                if (!String.IsNullOrWhiteSpace(message.From))
+                {
+                    resp = await Client.CallerAsync(message.From);
+                    if (resp.Code != ResponseCode.Success)
+                        return resp;
+                }
+
                 foreach (var pager in message.Pagers.Pagers)
                 {
                     resp = (await Client.PagerAsync(pager));
@@ -252,6 +259,13 @@ namespace SNPPlib
                 if (!String.IsNullOrWhiteSpace(LoginId))
                 {
                     resp = Client.Login(LoginId, Password);//TODO: What if password is empty or whitespace?
+                    if (resp.Code != ResponseCode.Success)
+                        return resp;
+                }
+
+                if (!String.IsNullOrWhiteSpace(message.From))
+                {
+                    resp = Client.Caller(message.From);
                     if (resp.Code != ResponseCode.Success)
                         return resp;
                 }

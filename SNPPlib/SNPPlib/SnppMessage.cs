@@ -11,6 +11,8 @@ namespace SNPPlib
 
         public string Message { get; set; }
 
+        public string From { get; set; }
+
         public PagerCollection Pagers { get; private set; }
 
         public ServiceLevel? ServiceLevel { get; set; }

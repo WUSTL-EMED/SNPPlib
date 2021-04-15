@@ -84,7 +84,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>if "$(ConfigurationName)" == "ReleaseNuget" CALL del "$(SolutionDir)\$(ProjectName).*.nupkg"</PreBuildEvent>
+    <PreBuildEvent>if "$(ConfigurationName)" == "ReleaseNuget" CALL del "$(SolutionDir)$(ProjectName).*.nupkg"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>if "$(ConfigurationName)" == "ReleaseNuget" CALL nuget pack "$(ProjectPath)" -Symbols -Properties Configuration="$(ConfigurationName)" -outputdirectory "$(SolutionDir)\"</PostBuildEvent>
